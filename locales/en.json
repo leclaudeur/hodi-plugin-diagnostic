@@ -29,8 +29,6 @@
     "introStart": "Tick what is wrong. Hodi keeps ",
     "introKept": "the original page and its extraction",
     "introEnd": " for your diagnostic pack.",
-    "introAgain": "Something else wrong? Tick it: each report goes into your diagnostic pack.",
-    "already": "Already reported",
     "issues": "What is wrong",
     "otherPlaceholder": "Say what is wrong (required)",
     "notePlaceholder": "Any detail? (optional)",
@@ -44,6 +42,12 @@
     "removeTitle": "Remove this report?",
     "removeMessage": "It leaves the list and your next pack.",
     "removeButton": "Remove"
+  },
+  "list": {
+    "title": "Already reported",
+    "intro": "What you reported on this article. Something else wrong? Report it too.",
+    "close": "Close",
+    "add": "Report more"
   },
   "capture": {
     "choose": "Choose or drop a screenshot",

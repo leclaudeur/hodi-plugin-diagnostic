@@ -1,4 +1,4 @@
-import { Image, MessageSquare, Trash2 } from 'lucide-react'
+import { MessageSquare } from 'lucide-react'
 import { useState } from 'react'
 import {
   Button,
@@ -6,17 +6,14 @@ import {
   DialogActions,
   FilterChip,
   type ReaderArticle,
-  RoundButton,
   StatusLine,
   TextField,
-  askToConfirm,
   showDone,
   showError,
   usePluginTranslation
 } from 'hodi:sdk'
-import { type Report, RequestError, reportsChanged, useDiagnosticApi } from './api.ts'
+import { RequestError, reportsChanged, useDiagnosticApi } from './api.ts'
 import CaptureField from './CaptureField.tsx'
-import { issuesText } from './format.ts'
 
 // What the admin can pick, as the server takes them (server/issues.ts).
 const PICKED = ['cut', 'extra', 'images', 'layout', 'wrong', 'other'] as const
@@ -25,14 +22,14 @@ const NOTE_MAX = 500
 interface ReportDialogProps {
   article: ReaderArticle
   open: boolean
-  // The admin's reports on this article already: listed on top, each can be taken back.
-  reports: Report[]
   onClose: () => void
+  // Sent: closes the list it was opened from too.
+  onSent: () => void
 }
 
-// "Signaler un souci": the problems to tick, "Autre" with its own words, a note and a screenshot. An article can be
-// reported again for something else: what was reported before is listed above the form.
-const ReportDialog = ({ article, open, reports, onClose }: ReportDialogProps) => {
+// "Signaler un souci": the problems to tick, a note ("Autre" says itself there) and a screenshot. Reported already,
+// the article opens ReportsDialog first, and this form comes over it as a stacked card.
+const ReportDialog = ({ article, open, onClose, onSent }: ReportDialogProps) => {
   const { t } = usePluginTranslation()
   const ask = useDiagnosticApi()
   const [issues, setIssues] = useState<string[]>([])
@@ -90,7 +87,7 @@ const ReportDialog = ({ article, open, reports, onClose }: ReportDialogProps) =>
       reportsChanged()
       showDone(t('dialog.done'))
       reset()
-      onClose()
+      onSent()
     } catch (caught) {
       setError(caught instanceof RequestError && caught.status === 404 ? t('dialog.gone') : t('dialog.failed'))
     } finally {
@@ -98,63 +95,21 @@ const ReportDialog = ({ article, open, reports, onClose }: ReportDialogProps) =>
     }
   }
 
-  const remove = (report: Report) =>
-    askToConfirm({
-      title: t('dialog.removeTitle'),
-      message: t('dialog.removeMessage'),
-      label: t('dialog.removeButton'),
-      onConfirm: () =>
-        void ask(`/reports/${report.id}`, { method: 'DELETE' }).then(reportsChanged, () =>
-          showError(t('dialog.failed'))
-        )
-    })
-
   return (
     <Dialog
       open={open}
       onClose={close}
       title={t('dialog.title')}
       intro={
-        reports.length > 0 ? (
-          t('dialog.introAgain')
-        ) : (
-          <>
-            {t('dialog.introStart')}
-            <b>{t('dialog.introKept')}</b>
-            {t('dialog.introEnd')}
-          </>
-        )
+        <>
+          {t('dialog.introStart')}
+          <b>{t('dialog.introKept')}</b>
+          {t('dialog.introEnd')}
+        </>
       }
     >
       {/* One block: the dialog's body scrolls it whole on a short screen, and squeezes none of its fields. */}
       <div className="diagnostic-form">
-        {reports.length > 0 && (
-          <div className="diagnostic-already">
-            <h3 className="diagnostic-label">{t('dialog.already')}</h3>
-            <ul className="diagnostic-already-list">
-              {reports.map(report => (
-                <li key={report.id} className="diagnostic-already-row">
-                  <span className="diagnostic-already-text">
-                    <span className="diagnostic-already-issues">
-                      {issuesText(report.issues, t)}
-                      {report.capture && (
-                        <Image size={14} className="diagnostic-capture-icon" aria-label={t('page.withCapture')} />
-                      )}
-                    </span>
-                    {report.note && <span className="diagnostic-already-note">{report.note}</span>}
-                  </span>
-                  <RoundButton
-                    icon={Trash2}
-                    label={t('dialog.remove')}
-                    size={34}
-                    variant="danger"
-                    onClick={() => remove(report)}
-                  />
-                </li>
-              ))}
-            </ul>
-          </div>
-        )}
         <div className="diagnostic-chips" role="group" aria-label={t('dialog.issues')}>
           {PICKED.map(issue => (
             <FilterChip key={issue} selected={issues.includes(issue)} disabled={busy} onClick={() => toggle(issue)}>
