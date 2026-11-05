@@ -66,7 +66,7 @@
     "intro": "What you reported on your sources, and what Hodi spotted on its own. Only you see it.",
     "pack": "Pack",
     "packTitle": "Diagnostic pack",
-    "packHint": "{{articles}} · {{size}} · original pages, extracts and screenshots",
+    "packHint": "{{articles}} · {{size}}",
     "packEmpty": "Empty for now",
     "articles_one": "{{count}} article",
     "articles_other": "{{count}} articles",
