@@ -1,4 +1,4 @@
-import { ChevronDown, Download, Flag, Trash2 } from 'lucide-react'
+import { ChevronDown, Download, Flag, Image, Trash2 } from 'lucide-react'
 import { useState } from 'react'
 import {
   Button,
@@ -95,14 +95,12 @@ const DiagnosticPage = ({ layout }: { layout: 'desktop' | 'phone' }) => {
                 <a className="diagnostic-row" href={`#/article/${encodeURIComponent(row.articleId)}`}>
                   <span className="diagnostic-row-title">{row.title}</span>
                   <span className="diagnostic-row-issues">
-                    {[
-                      row.auto
-                        ? `${t('page.auto')} · ${lowerFirst(issuesText(row.issues, t))}`
-                        : issuesText(row.issues, t),
-                      row.captures > 0 ? t('page.withCapture') : null
-                    ]
-                      .filter(Boolean)
-                      .join(' · ')}
+                    {row.auto
+                      ? `${t('page.auto')} · ${lowerFirst(issuesText(row.issues, t))}`
+                      : issuesText(row.issues, t)}
+                    {row.captures > 0 && (
+                      <Image size={14} className="diagnostic-capture-icon" aria-label={t('page.withCapture')} />
+                    )}
                   </span>
                   <span className="diagnostic-row-meta">
                     <SourceAvatar sourceId={row.sourceId} sourceName={row.sourceName} size={18} />

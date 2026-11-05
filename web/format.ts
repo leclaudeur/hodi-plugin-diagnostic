@@ -11,15 +11,11 @@ export const sizeText = (
     : t('size.mb', { value: number(bytes / (1024 * 1024), 1) })
 }
 
-// The issues of a report as the list says them: "Texte coupé, éléments en trop", "Autre : la date est fausse".
-export const issuesText = (
-  issues: readonly string[],
-  t: (key: string, options?: Record<string, unknown>) => string,
-  other?: string | null
-) =>
+// The issues of a report as the list says them: "Texte coupé, éléments en trop".
+export const issuesText = (issues: readonly string[], t: (key: string, options?: Record<string, unknown>) => string) =>
   issues
     .map((issue, at) => {
-      const label = issue === 'other' && other ? t('issues.otherSaid', { text: other }) : t(`issues.${issue}`)
+      const label = t(`issues.${issue}`)
       return at === 0 ? label : label.charAt(0).toLowerCase() + label.slice(1)
     })
     .join(', ')

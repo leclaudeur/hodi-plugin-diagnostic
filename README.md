@@ -4,7 +4,7 @@ A [Hodi](https://github.com/leclaudeur/hodi) plugin for the household's admin: i
 on an article, and gathers everything needed to fix it into one pack to send.
 
 - **Signaler**, at the end of an article beside "Lire l'original". The dialog asks what is wrong (texte coupé,
-  éléments en trop, images manquantes, mise en page cassée, mauvais contenu, or "Autre" in your own words), and takes a
+  éléments en trop, images manquantes, mise en page cassée, mauvais contenu, or "Autre", said in the note), and takes a
   note and a screenshot (PNG or JPG, 5 MB at most). The same article can be reported again for something else; the
   button then says "Signalé · 2", and the dialog lists the reports already made, each of which can be taken back.
 - **Repéré seul**: as Hodi reads an article for the first time, the plugin notes on its own a site that did not answer,
@@ -21,7 +21,7 @@ other profiles. It makes no AI call.
 `hodi-diagnostic-<date>.zip` holds one folder per article:
 
 ```text
-report.json      the article, every report on it (issues, "Autre", note, by the admin or by Hodi) and when
+report.json      the article, every report on it (issues, note, by the admin or by Hodi) and when
 page.html        its page as its site served it when it was first reported
 extracted.html   the text Hodi's reader took from it
 capture-<n>.png  the screenshots

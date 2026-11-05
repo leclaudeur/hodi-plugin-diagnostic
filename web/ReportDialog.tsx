@@ -1,4 +1,4 @@
-import { MessageSquare, PenLine, Trash2 } from 'lucide-react'
+import { Image, MessageSquare, Trash2 } from 'lucide-react'
 import { useState } from 'react'
 import {
   Button,
@@ -20,7 +20,6 @@ import { issuesText } from './format.ts'
 
 // What the admin can pick, as the server takes them (server/issues.ts).
 const PICKED = ['cut', 'extra', 'images', 'layout', 'wrong', 'other'] as const
-const OTHER_MAX = 200
 const NOTE_MAX = 500
 
 interface ReportDialogProps {
@@ -37,7 +36,6 @@ const ReportDialog = ({ article, open, reports, onClose }: ReportDialogProps) =>
   const { t } = usePluginTranslation()
   const ask = useDiagnosticApi()
   const [issues, setIssues] = useState<string[]>([])
-  const [other, setOther] = useState('')
   const [note, setNote] = useState('')
   const [capture, setCapture] = useState<File | null>(null)
   const [busy, setBusy] = useState(false)
@@ -45,7 +43,6 @@ const ReportDialog = ({ article, open, reports, onClose }: ReportDialogProps) =>
 
   const reset = () => {
     setIssues([])
-    setOther('')
     setNote('')
     setCapture(null)
     setError(null)
@@ -61,7 +58,8 @@ const ReportDialog = ({ article, open, reports, onClose }: ReportDialogProps) =>
     setIssues(current => (current.includes(issue) ? current.filter(entry => entry !== issue) : [...current, issue]))
 
   const saysOther = issues.includes('other')
-  const ready = issues.length > 0 && (!saysOther || other.trim().length > 0)
+  // "Autre" is said in the note, which it makes needed.
+  const ready = issues.length > 0 && (!saysOther || note.trim().length > 0)
 
   const send = async () => {
     setBusy(true)
@@ -74,7 +72,6 @@ const ReportDialog = ({ article, open, reports, onClose }: ReportDialogProps) =>
           articleId: article.id,
           // In the order of the chips, whatever the order they were ticked in.
           issues: PICKED.filter(issue => issues.includes(issue)),
-          ...(saysOther ? { other: other.trim() } : {}),
           ...(note.trim() ? { note: note.trim() } : {})
         })
       })
@@ -134,16 +131,17 @@ const ReportDialog = ({ article, open, reports, onClose }: ReportDialogProps) =>
         {reports.length > 0 && (
           <div className="diagnostic-already">
             <h3 className="diagnostic-label">{t('dialog.already')}</h3>
-            <ul className="diagnostic-card">
+            <ul className="diagnostic-already-list">
               {reports.map(report => (
                 <li key={report.id} className="diagnostic-already-row">
                   <span className="diagnostic-already-text">
-                    <span className="diagnostic-already-issues">{issuesText(report.issues, t, report.other)}</span>
-                    {(report.note || report.capture) && (
-                      <span className="diagnostic-already-note">
-                        {[report.note, report.capture ? t('page.withCapture') : null].filter(Boolean).join(' · ')}
-                      </span>
-                    )}
+                    <span className="diagnostic-already-issues">
+                      {issuesText(report.issues, t)}
+                      {report.capture && (
+                        <Image size={14} className="diagnostic-capture-icon" aria-label={t('page.withCapture')} />
+                      )}
+                    </span>
+                    {report.note && <span className="diagnostic-already-note">{report.note}</span>}
                   </span>
                   <RoundButton
                     icon={Trash2}
@@ -164,24 +162,13 @@ const ReportDialog = ({ article, open, reports, onClose }: ReportDialogProps) =>
             </FilterChip>
           ))}
         </div>
-        {saysOther && (
-          <TextField
-            icon={PenLine}
-            value={other}
-            maxLength={OTHER_MAX}
-            placeholder={t('dialog.otherPlaceholder')}
-            aria-label={t('dialog.otherPlaceholder')}
-            disabled={busy}
-            autoFocus
-            onChange={event => setOther(event.target.value)}
-          />
-        )}
+        {/* One field: a precision, or what "Autre" is once it is ticked. */}
         <TextField
           icon={MessageSquare}
           value={note}
           maxLength={NOTE_MAX}
-          placeholder={t('dialog.notePlaceholder')}
-          aria-label={t('dialog.notePlaceholder')}
+          placeholder={t(saysOther ? 'dialog.otherPlaceholder' : 'dialog.notePlaceholder')}
+          aria-label={t(saysOther ? 'dialog.otherPlaceholder' : 'dialog.notePlaceholder')}
           disabled={busy}
           onChange={event => setNote(event.target.value)}
         />

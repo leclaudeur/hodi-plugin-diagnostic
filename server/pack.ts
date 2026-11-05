@@ -6,7 +6,7 @@ const README = `Hodi diagnostic pack
 
 One folder per article reported in Réglages > Diagnostic, or spotted by Hodi alone:
 
-  report.json      the article, what was said about it (issues, "other", note) and when
+  report.json      the article, what was said about it (issues, note) and when
   page.html        its page as its site served it when it was reported (missing when the site did not answer)
   extracted.html   the text Hodi's reader took from it (missing when it found none)
   capture-<n>.png  the screenshots added to the reports
@@ -44,7 +44,6 @@ export const buildPack = (store: Store, captures: CaptureFiles, now: number) => 
         id: report.id,
         by: report.auto ? 'hodi' : 'admin',
         issues: report.issues,
-        other: report.other,
         note: report.note,
         capture: report.capture ? `capture-${report.id}.${report.capture.type}` : null,
         at: new Date(report.createdAt).toISOString()

@@ -1,7 +1,7 @@
 import type { PluginArticle, PluginContext, ServerPlugin } from '@hodi-app/plugin-sdk/server'
 import type { Request, Response } from 'express'
 import { CAPTURE_MAX_BYTES, captureFiles, captureType, readBody } from './captures.ts'
-import { NOTE_MAX, OTHER_MAX, PICKED, type Picked } from './issues.ts'
+import { NOTE_MAX, PICKED, type Picked } from './issues.ts'
 import { buildPack, packName } from './pack.ts'
 import { spotted } from './signals.ts'
 import { MIGRATIONS, type Store, createStore } from './store.ts'
@@ -12,7 +12,7 @@ export const SPOTTED_MAX = 300
 // Every route is the admin's alone (audience "admin" in plugin.json): Hodi checks it before they run.
 // GET    /summary                  the page's numbers and rows
 // GET    /articles/:id/reports     the admin's reports on an article, for the dialog
-// POST   /reports                  a new report { articleId, issues, other?, note? }
+// POST   /reports                  a new report { articleId, issues, note? }
 // PUT    /reports/:id/capture      its screenshot, the PNG or JPG file as the body
 // DELETE /reports/:id              one report
 // DELETE /reports                  all of them, once the pack is sent
@@ -54,10 +54,9 @@ const plugin: ServerPlugin = {
 
     router.get('/articles/:id/reports', (request, response) => {
       response.json({
-        reports: store.reportedOn(String(request.params.id)).map(({ id, issues, other, note, capture, createdAt }) => ({
+        reports: store.reportedOn(String(request.params.id)).map(({ id, issues, note, capture, createdAt }) => ({
           id,
           issues,
-          other,
           note,
           capture: capture !== null,
           createdAt
@@ -68,16 +67,14 @@ const plugin: ServerPlugin = {
     router.post('/reports', async (request: Request, response: Response) => {
       const body = (request.body ?? {}) as Record<string, unknown>
       const issues = Array.isArray(body.issues) ? [...new Set(body.issues)] : []
-      const other = text(body.other, OTHER_MAX)
       const note = text(body.note, NOTE_MAX)
       const valid =
         typeof body.articleId === 'string' &&
         issues.length > 0 &&
         issues.every(issue => PICKED.includes(issue as Picked)) &&
-        other !== undefined &&
         note !== undefined &&
-        // "Autre" says what it is; nothing else does.
-        (issues.includes('other') ? other !== null : other === null)
+        // "Autre" says what it is, in the note.
+        (!issues.includes('other') || note !== null)
       if (!valid) {
         response.status(400).json({ error: 'invalid_report' })
         return
@@ -92,7 +89,6 @@ const plugin: ServerPlugin = {
         articleId: article.id,
         auto: false,
         issues: issues as Picked[],
-        other,
         note,
         now: Date.now()
       })

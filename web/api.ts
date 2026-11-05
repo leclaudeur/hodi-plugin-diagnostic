@@ -24,7 +24,6 @@ export interface Summary {
 export interface Report {
   id: number
   issues: string[]
-  other: string | null
   note: string | null
   capture: boolean
   createdAt: number

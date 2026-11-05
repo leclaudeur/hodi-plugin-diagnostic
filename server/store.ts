@@ -13,8 +13,7 @@ export const MIGRATIONS = [
     auto INTEGER NOT NULL,
     -- A JSON array of issues (issues.ts).
     issues TEXT NOT NULL,
-    -- What "Autre" says, and the admin's note.
-    other TEXT,
+    -- The admin's words: a precision, or what "Autre" is.
     note TEXT,
     -- The screenshot, kept in the plugin's folder as captures/<id>.<png|jpg>.
     capture_type TEXT,
@@ -48,7 +47,6 @@ export interface Report {
   articleId: string
   auto: boolean
   issues: Issue[]
-  other: string | null
   note: string | null
   capture: { type: CaptureType; bytes: number } | null
   createdAt: number
@@ -89,7 +87,6 @@ interface ReportRow {
   article_id: string
   auto: number
   issues: string
-  other: string | null
   note: string | null
   capture_type: string | null
   capture_bytes: number | null
@@ -101,7 +98,6 @@ const toReport = (row: ReportRow): Report => ({
   articleId: row.article_id,
   auto: row.auto === 1,
   issues: JSON.parse(row.issues) as Issue[],
-  other: row.other,
   note: row.note,
   capture:
     row.capture_type && row.capture_bytes !== null
@@ -166,28 +162,15 @@ export const createStore = (db: Database) => {
       } satisfies KeptArticle
     },
 
-    add: (report: {
-      articleId: string
-      auto: boolean
-      issues: readonly Issue[]
-      other?: string | null
-      note?: string | null
-      now: number
-    }) =>
+    add: (report: { articleId: string; auto: boolean; issues: readonly Issue[]; note?: string | null; now: number }) =>
       Number(
         db
           .prepare(
-            `INSERT INTO plugin_diagnostic_reports (article_id, auto, issues, other, note, created_at)
-             VALUES (?, ?, ?, ?, ?, ?)`
+            `INSERT INTO plugin_diagnostic_reports (article_id, auto, issues, note, created_at)
+             VALUES (?, ?, ?, ?, ?)`
           )
-          .run(
-            report.articleId,
-            report.auto ? 1 : 0,
-            JSON.stringify(report.issues),
-            report.other ?? null,
-            report.note ?? null,
-            report.now
-          ).lastInsertRowid
+          .run(report.articleId, report.auto ? 1 : 0, JSON.stringify(report.issues), report.note ?? null, report.now)
+          .lastInsertRowid
       ),
 
     get: (id: number) => reports('WHERE id = ?', id)[0] ?? null,

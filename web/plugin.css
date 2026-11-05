@@ -34,44 +34,57 @@
   text-transform: uppercase;
 }
 
-.diagnostic-card {
+/* The reports already made: plain rows, the dialog's text on its background, each its own line of air. */
+.diagnostic-already-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
   margin: 0;
   padding: 0;
-  overflow: hidden;
-  border: 1px solid var(--border);
-  border-radius: 16px;
-  background: var(--column);
   list-style: none;
+}
+
+.diagnostic-already {
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--divider);
 }
 
 .diagnostic-already-row {
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 10px 10px 10px 16px;
-}
-
-.diagnostic-already-row + .diagnostic-already-row {
-  border-top: 1px solid var(--divider);
+  min-height: 44px;
+  padding: 6px 0;
 }
 
 .diagnostic-already-text {
   display: flex;
   flex: 1;
   flex-direction: column;
-  gap: 2px;
+  gap: 4px;
   min-width: 0;
 }
 
 .diagnostic-already-issues {
+  display: flex;
+  align-items: center;
+  gap: 8px;
   color: var(--text);
-  font-size: 14px;
+  font-size: 15px;
+  font-weight: 500;
 }
 
 .diagnostic-already-note {
   color: var(--text-2);
-  font-size: 13px;
+  font-size: 14px;
+  line-height: 1.4;
   overflow-wrap: anywhere;
+}
+
+/* A screenshot comes with the report: said by an icon, its words left to screen readers. */
+.diagnostic-capture-icon {
+  flex-shrink: 0;
+  color: var(--text-3);
 }
 
 /* The screenshot: as the file of Ajouter un plugin, in one row. */
@@ -207,6 +220,9 @@
 }
 
 .diagnostic-row-issues {
+  display: flex;
+  align-items: center;
+  gap: 8px;
   color: var(--text-2);
   font-size: 13px;
 }

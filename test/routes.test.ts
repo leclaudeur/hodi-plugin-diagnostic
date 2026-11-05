@@ -74,11 +74,10 @@ describe('Diagnostic', () => {
 
   after(() => close())
 
-  it('refuses a report without an issue, or "Autre" without its words', async () => {
+  it('refuses a report without an issue, or "Autre" without a note', async () => {
     assert.equal((await post({ articleId: 'a1', issues: [] })).status, 400)
     assert.equal((await post({ articleId: 'a1', issues: ['nope'] })).status, 400)
     assert.equal((await post({ articleId: 'a1', issues: ['other'] })).status, 400)
-    assert.equal((await post({ articleId: 'a1', issues: ['cut'], other: 'pas pour toi' })).status, 400)
     assert.equal((await post({ articleId: 'a1', issues: ['cut'], note: 'x'.repeat(501) })).status, 400)
     assert.equal((await post({ articleId: 'zz', issues: ['cut'] })).status, 404)
   })
@@ -86,7 +85,7 @@ describe('Diagnostic', () => {
   it('keeps several reports on one article, its page fetched once', async () => {
     const first = await post({ articleId: 'a1', issues: ['cut', 'extra'], note: 'Le bloc « Lire aussi »' })
     assert.equal(first.status, 201)
-    const second = await post({ articleId: 'a1', issues: ['other'], other: 'La date est fausse' })
+    const second = await post({ articleId: 'a1', issues: ['other'], note: 'La date est fausse' })
     assert.equal(second.status, 201)
     assert.deepEqual(pages, ['a1'])
 
