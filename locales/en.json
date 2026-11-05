@@ -1,0 +1,14 @@
+{
+  "settings": {
+    "greeting": "Message",
+    "greetingHint": "What the plugin answers",
+    "loud": "In capitals",
+    "loudHint": "For big days"
+  },
+  "title": "Say hello",
+  "hint": "The plugin’s server answers with your message",
+  "say": "Say hello",
+  "count_one": "Said {{count}} time",
+  "count_other": "Said {{count}} times",
+  "failed": "The plugin didn’t answer."
+}

@@ -1,0 +1,14 @@
+{
+  "settings": {
+    "greeting": "Message",
+    "greetingHint": "Ce que le plugin répond",
+    "loud": "En majuscules",
+    "loudHint": "Pour les grands jours"
+  },
+  "title": "Dire bonjour",
+  "hint": "Le serveur du plugin répond avec ton message",
+  "say": "Dire bonjour",
+  "count_one": "Dit {{count}} fois",
+  "count_other": "Dit {{count}} fois",
+  "failed": "Le plugin n’a pas répondu."
+}

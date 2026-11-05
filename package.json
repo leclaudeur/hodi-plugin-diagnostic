@@ -1,0 +1,21 @@
+{
+  "name": "my-hodi-plugin",
+  "version": "0.1.0",
+  "private": true,
+  "license": "MIT",
+  "type": "module",
+  "scripts": {
+    "build": "hodi-plugin build",
+    "typecheck": "tsc --noEmit",
+    "format": "prettier --write .",
+    "format:check": "prettier --check ."
+  },
+  "devDependencies": {
+    "@hodi-app/plugin-sdk": "^0.1.0",
+    "@types/express": "^5.0.6",
+    "@types/node": "^24.19.2",
+    "@types/react": "^19.3.0",
+    "prettier": "^3.9.10",
+    "typescript": "~6.0.3"
+  }
+}

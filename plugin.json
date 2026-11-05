@@ -1,0 +1,12 @@
+{
+  "id": "my-plugin",
+  "name": "Mon plugin",
+  "version": "0.1.0",
+  "description": "Un plugin Hodi : un réglage, une route et sa propre carte.",
+  "api": 1,
+  "audience": "all",
+  "settings": [
+    { "key": "greeting", "type": "text", "default": "Bonjour", "maxLength": 40 },
+    { "key": "loud", "type": "boolean", "default": false }
+  ]
+}
