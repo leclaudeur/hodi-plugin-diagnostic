@@ -10,7 +10,7 @@ permissions:
   contents: read
 
 jobs:
-  build:
+  check:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
@@ -20,24 +20,40 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm run typecheck
+      - run: npm test
       - run: npm run format:check
       - run: npm run build
       - uses: actions/upload-artifact@v4
         with:
-          name: hodi-plugin
+          name: hodi-plugin-unsigned
           path: dist/*.hodi-plugin
 
-  # A tag such as v0.1.0 publishes the package as a GitHub release, unsigned.
+  # A tag such as v0.2.0 publishes a package signed with the repository's SIGNING_KEY secret, as a GitHub release.
   release:
     if: startsWith(github.ref, 'refs/tags/v')
-    needs: build
+    needs: check
     runs-on: ubuntu-latest
     permissions:
       contents: write
     steps:
-      - uses: actions/download-artifact@v4
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
         with:
-          name: hodi-plugin
-      - run: gh release create "$GITHUB_REF_NAME" *.hodi-plugin --repo "$GITHUB_REPOSITORY" --generate-notes
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      # The tag must be the version the package says it is.
+      - run: test "v$(node -p "require('./plugin.json').version")" = "$GITHUB_REF_NAME"
+      - name: Build, signed
+        env:
+          SIGNING_KEY: ${{ secrets.SIGNING_KEY }}
+        run: |
+          test -n "$SIGNING_KEY"
+          key="$RUNNER_TEMP/signing.pem"
+          trap 'rm -f "$key"' EXIT
+          umask 077
+          printf '%s\n' "$SIGNING_KEY" > "$key"
+          npm run build -- --key "$key"
+      - run: gh release create "$GITHUB_REF_NAME" dist/*.hodi-plugin --repo "$GITHUB_REPOSITORY" --generate-notes
         env:
           GH_TOKEN: ${{ github.token }}

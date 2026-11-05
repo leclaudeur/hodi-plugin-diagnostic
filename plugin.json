@@ -1,12 +1,10 @@
 {
-  "id": "my-plugin",
-  "name": "Mon plugin",
+  "id": "diagnostic",
+  "name": "Diagnostic",
   "version": "0.1.0",
-  "description": "Un plugin Hodi : un réglage, une route et sa propre carte.",
+  "description": "Signale ce que le lecteur rate sur un article, et prépare un pack pour le corriger.",
   "api": 1,
-  "audience": "all",
-  "settings": [
-    { "key": "greeting", "type": "text", "default": "Bonjour", "maxLength": 40 },
-    { "key": "loud", "type": "boolean", "default": false }
-  ]
+  "audience": "admin",
+  "menu": { "group": "household", "after": "ai" },
+  "settings": [{ "key": "autoSignals", "type": "boolean", "default": true }]
 }

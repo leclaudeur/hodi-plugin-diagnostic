@@ -1,5 +1,5 @@
 {
-  "name": "my-hodi-plugin",
+  "name": "hodi-plugin-diagnostic",
   "version": "0.1.0",
   "private": true,
   "license": "MIT",
@@ -7,14 +7,18 @@
   "scripts": {
     "build": "hodi-plugin build",
     "typecheck": "tsc --noEmit",
+    "test": "node --test --disable-warning=ExperimentalWarning test/*.test.ts",
     "format": "prettier --write .",
     "format:check": "prettier --check ."
   },
   "devDependencies": {
-    "@hodi-app/plugin-sdk": "^0.1.0",
+    "@hodi-app/plugin-sdk": "^0.2.0",
     "@types/express": "^5.0.6",
     "@types/node": "^24.19.2",
     "@types/react": "^19.3.0",
+    "express": "^5.3.0",
+    "fflate": "^0.8.3",
+    "lucide-react": "^1.66.0",
     "prettier": "^3.9.10",
     "typescript": "~6.0.3"
   }
