@@ -1,14 +1,94 @@
 {
   "settings": {
-    "greeting": "Message",
-    "greetingHint": "What the plugin answers",
-    "loud": "In capitals",
-    "loudHint": "For big days"
+    "autoSignals": "Spot on its own",
+    "autoSignalsHint": "Hodi notes articles blocked, too short or with page leftovers"
   },
-  "title": "Say hello",
-  "hint": "The plugin’s server answers with your message",
-  "say": "Say hello",
-  "count_one": "Said {{count}} time",
-  "count_other": "Said {{count}} times",
-  "failed": "The plugin didn’t answer."
+  "menu": {
+    "none": "Nothing reported",
+    "count_one": "{{count}} article reported",
+    "count_other": "{{count}} articles reported"
+  },
+  "reader": {
+    "report": "Report",
+    "reported": "Reported",
+    "reportedCount": "Reported · {{count}}"
+  },
+  "issues": {
+    "cut": "Text cut",
+    "extra": "Extra elements",
+    "images": "Missing images",
+    "layout": "Broken layout",
+    "wrong": "Wrong content",
+    "other": "Other",
+    "blocked": "Site blocked",
+    "short": "Short text",
+    "leftovers": "Page leftovers"
+  },
+  "dialog": {
+    "title": "Report a problem",
+    "introStart": "Tick what is wrong. Hodi keeps ",
+    "introKept": "the original page and its extraction",
+    "introEnd": " for your diagnostic pack.",
+    "issues": "What is wrong",
+    "otherPlaceholder": "Say what is wrong (required)",
+    "notePlaceholder": "Any detail? (optional)",
+    "cancel": "Cancel",
+    "send": "Report",
+    "done": "Article reported",
+    "failed": "The report could not be sent.",
+    "gone": "This article is no longer in Hodi.",
+    "captureFailed": "The screenshot could not be sent.",
+    "remove": "Remove this report",
+    "removeTitle": "Remove this report?",
+    "removeMessage": "It leaves the list and your next pack.",
+    "removeButton": "Remove"
+  },
+  "list": {
+    "title": "Already reported",
+    "intro": "What you reported on this article. Something else wrong? Report it too.",
+    "close": "Close",
+    "add": "Report more"
+  },
+  "capture": {
+    "choose": "Choose or drop a screenshot",
+    "dropHere": "Drop the screenshot here",
+    "reading": "Reading the image…",
+    "hint": "PNG, JPG · 5 MB max",
+    "chosen": "Screenshot",
+    "remove": "Remove the screenshot",
+    "errors": {
+      "tooBig": "This image is too big (5 MB at most).",
+      "notAnImage": "This file is not a PNG or JPG image."
+    }
+  },
+  "page": {
+    "title": "Diagnostic",
+    "intro": "What you reported on your sources, and what Hodi spotted on its own. Only you see it.",
+    "pack": "Pack",
+    "packTitle": "Diagnostic pack",
+    "packHint": "{{articles}} · {{size}}",
+    "packEmpty": "Empty for now",
+    "articles_one": "{{count}} article",
+    "articles_other": "{{count}} articles",
+    "download": "Download",
+    "reported": "Reported",
+    "auto": "Spotted by Hodi",
+    "withCapture": "With a screenshot",
+    "more_one": "See the other one",
+    "more_other": "See the {{count}} others",
+    "emptyTitle": "Nothing reported",
+    "emptyText": "Report an article from the reader, under its text.",
+    "after": "After sending",
+    "clear": "Empty the list",
+    "clearHint": "Once the pack is sent and fixed",
+    "clearButton": "Empty",
+    "clearTitle": "Empty the list?",
+    "clearMessage": "Reports, kept pages and screenshots are deleted for good.",
+    "cleared": "List emptied",
+    "failed": "Diagnostic did not answer."
+  },
+  "size": {
+    "kb": "{{value}} KB",
+    "mb": "{{value}} MB"
+  }
 }

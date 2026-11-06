@@ -1,14 +1,94 @@
 {
   "settings": {
-    "greeting": "Message",
-    "greetingHint": "Ce que le plugin répond",
-    "loud": "En majuscules",
-    "loudHint": "Pour les grands jours"
+    "autoSignals": "Repérer seul",
+    "autoSignalsHint": "Hodi note les articles bloqués, trop courts ou avec des restes de la page"
   },
-  "title": "Dire bonjour",
-  "hint": "Le serveur du plugin répond avec ton message",
-  "say": "Dire bonjour",
-  "count_one": "Dit {{count}} fois",
-  "count_other": "Dit {{count}} fois",
-  "failed": "Le plugin n’a pas répondu."
+  "menu": {
+    "none": "Rien de signalé",
+    "count_one": "{{count}} article signalé",
+    "count_other": "{{count}} articles signalés"
+  },
+  "reader": {
+    "report": "Signaler",
+    "reported": "Signalé",
+    "reportedCount": "Signalé · {{count}}"
+  },
+  "issues": {
+    "cut": "Texte coupé",
+    "extra": "Éléments en trop",
+    "images": "Images manquantes",
+    "layout": "Mise en page cassée",
+    "wrong": "Mauvais contenu",
+    "other": "Autre",
+    "blocked": "Site bloqué",
+    "short": "Texte court",
+    "leftovers": "Restes de la page"
+  },
+  "dialog": {
+    "title": "Signaler un souci",
+    "introStart": "Coche ce qui ne va pas. Hodi garde ",
+    "introKept": "la page d’origine et son extraction",
+    "introEnd": " pour ton pack de diagnostic.",
+    "issues": "Ce qui ne va pas",
+    "otherPlaceholder": "Dis ce qui ne va pas (requis)",
+    "notePlaceholder": "Une précision ? (facultatif)",
+    "cancel": "Annuler",
+    "send": "Signaler",
+    "done": "Article signalé",
+    "failed": "Le signalement n’a pas pu être envoyé.",
+    "gone": "Cet article n’est plus dans Hodi.",
+    "captureFailed": "La capture n’a pas pu être envoyée.",
+    "remove": "Retirer ce signalement",
+    "removeTitle": "Retirer ce signalement ?",
+    "removeMessage": "Il quitte la liste et ton prochain pack.",
+    "removeButton": "Retirer"
+  },
+  "list": {
+    "title": "Déjà signalé",
+    "intro": "Ce que tu as signalé sur cet article. Autre chose ne va pas ? Signale-le aussi.",
+    "close": "Fermer",
+    "add": "Signaler autre chose"
+  },
+  "capture": {
+    "choose": "Choisis ou dépose une capture",
+    "dropHere": "Dépose la capture ici",
+    "reading": "Lecture de l’image…",
+    "hint": "PNG, JPG · 5 Mo max",
+    "chosen": "Capture d’écran",
+    "remove": "Retirer la capture",
+    "errors": {
+      "tooBig": "Cette image est trop grosse (5 Mo au plus).",
+      "notAnImage": "Ce fichier n’est pas une image PNG ou JPG."
+    }
+  },
+  "page": {
+    "title": "Diagnostic",
+    "intro": "Ce que tu as signalé sur tes sources, et ce que Hodi a repéré seul. Visible par toi seulement.",
+    "pack": "Pack",
+    "packTitle": "Pack de diagnostic",
+    "packHint": "{{articles}} · {{size}}",
+    "packEmpty": "Vide pour l’instant",
+    "articles_one": "{{count}} article",
+    "articles_other": "{{count}} articles",
+    "download": "Télécharger",
+    "reported": "Signalés",
+    "auto": "Repéré seul",
+    "withCapture": "Avec une capture",
+    "more_one": "Voir l’autre",
+    "more_other": "Voir les {{count}} autres",
+    "emptyTitle": "Rien de signalé",
+    "emptyText": "Signale un article depuis le lecteur, sous son texte.",
+    "after": "Après l’envoi",
+    "clear": "Vider la liste",
+    "clearHint": "Une fois le pack envoyé et corrigé",
+    "clearButton": "Vider",
+    "clearTitle": "Vider la liste ?",
+    "clearMessage": "Les signalements, les pages gardées et les captures sont effacés pour de bon.",
+    "cleared": "Liste vidée",
+    "failed": "Le diagnostic n’a pas répondu."
+  },
+  "size": {
+    "kb": "{{value}} Ko",
+    "mb": "{{value}} Mo"
+  }
 }

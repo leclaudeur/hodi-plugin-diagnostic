@@ -1,36 +1,21 @@
-import { useState } from 'react'
-import { Button, SettingRow, definePlugin, showError, usePluginApi, usePluginTranslation } from 'hodi:sdk'
+import { Flag } from 'lucide-react'
+import { definePlugin, usePluginTranslation } from 'hodi:sdk'
+import { type Summary, useAsked } from './api.ts'
+import DiagnosticPage from './DiagnosticPage.tsx'
+import ReportAction from './ReportAction.tsx'
 import './plugin.css'
 
-// The web part: a card under the plugin's options in Réglages, drawn with Hodi's own components.
-const HelloCard = () => {
+// Under "Diagnostic" in Réglages: how many articles wait in the pack.
+const MenuHint = () => {
   const { t } = usePluginTranslation()
-  const api = usePluginApi()
-  const [said, setSaid] = useState<{ text: string; count: number } | null>(null)
-  const [busy, setBusy] = useState(false)
-
-  const sayHello = async () => {
-    setBusy(true)
-    try {
-      const response = await api('/hello', { method: 'POST' })
-      if (!response.ok) throw new Error(String(response.status))
-      setSaid((await response.json()) as { text: string; count: number })
-    } catch {
-      showError(t('failed'))
-    } finally {
-      setBusy(false)
-    }
-  }
-
-  return (
-    <div className="my-plugin-card">
-      <SettingRow label={said ? said.text : t('title')} hint={said ? t('count', { count: said.count }) : t('hint')}>
-        <Button compact busy={busy} onClick={() => void sayHello()}>
-          {t('say')}
-        </Button>
-      </SettingRow>
-    </div>
-  )
+  const { data } = useAsked<Summary>('/summary')
+  if (!data) return null
+  return <>{data.articles === 0 ? t('menu.none') : t('menu.count', { count: data.articles })}</>
 }
 
-definePlugin({ settingsPage: HelloCard })
+definePlugin({
+  readerAction: ReportAction,
+  page: DiagnosticPage,
+  menuIcon: Flag,
+  menuHint: MenuHint
+})

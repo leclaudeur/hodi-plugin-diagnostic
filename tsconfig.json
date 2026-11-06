@@ -13,5 +13,5 @@
     // hodi:sdk, Hodi's components and hooks, typed by the SDK; Node and Express for the server part.
     "types": ["node", "@hodi-app/plugin-sdk/hodi-sdk"]
   },
-  "include": ["server", "web"]
+  "include": ["server", "web", "test"]
 }
