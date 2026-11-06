@@ -12,6 +12,7 @@ import {
   shortAgo,
   showDone,
   showError,
+  usePluginLinks,
   usePluginTranslation
 } from 'hodi:sdk'
 import { type Summary, reportsChanged, useAsked, useDiagnosticApi } from './api.ts'
@@ -27,6 +28,7 @@ const lowerFirst = (text: string) => text.charAt(0).toLowerCase() + text.slice(1
 const DiagnosticPage = ({ layout }: { layout: 'desktop' | 'phone' }) => {
   const { t, language } = usePluginTranslation()
   const ask = useDiagnosticApi()
+  const links = usePluginLinks()
   const { data, failed } = useAsked<Summary>('/summary')
   const [unfolded, setUnfolded] = useState(false)
   const [clearing, setClearing] = useState(false)
@@ -92,7 +94,7 @@ const DiagnosticPage = ({ layout }: { layout: 'desktop' | 'phone' }) => {
           <ul className="diagnostic-list">
             {shown.map(row => (
               <li key={row.articleId}>
-                <a className="diagnostic-row" href={`#/article/${encodeURIComponent(row.articleId)}`}>
+                <a className="diagnostic-row" href={links.article(row.articleId)}>
                   <span className="diagnostic-row-title">{row.title}</span>
                   <span className="diagnostic-row-issues">
                     {row.auto
