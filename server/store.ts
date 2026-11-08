@@ -3,11 +3,13 @@ import type { Issue } from './issues.ts'
 
 type Database = PluginContext['db']
 
-// The plugin's own tables. Appended to, never edited once released.
+// The plugin's own tables, one statement a step. Appended to, never edited once released. They keep the names they had
+// in Hodi's database (plugin API 1), and IF NOT EXISTS: Hodi copies the tables of API 1 over before the first start, so
+// the reports already made stay.
 export const MIGRATIONS = [
   `
   -- What is wrong with an article: reported by the admin (auto 0), or spotted by Hodi as it read it (auto 1).
-  CREATE TABLE plugin_diagnostic_reports (
+  CREATE TABLE IF NOT EXISTS plugin_diagnostic_reports (
     id INTEGER PRIMARY KEY,
     article_id TEXT NOT NULL,
     auto INTEGER NOT NULL,
@@ -19,11 +21,11 @@ export const MIGRATIONS = [
     capture_type TEXT,
     capture_bytes INTEGER,
     created_at INTEGER NOT NULL
-  );
-  CREATE INDEX plugin_diagnostic_reports_article ON plugin_diagnostic_reports (article_id);
-
+  )`,
+  'CREATE INDEX IF NOT EXISTS plugin_diagnostic_reports_article ON plugin_diagnostic_reports (article_id)',
+  `
   -- The article as Hodi had it when it was first reported: its reader text and its page on its site, for the pack.
-  CREATE TABLE plugin_diagnostic_articles (
+  CREATE TABLE IF NOT EXISTS plugin_diagnostic_articles (
     article_id TEXT PRIMARY KEY,
     title TEXT NOT NULL,
     url TEXT NOT NULL,
@@ -36,8 +38,7 @@ export const MIGRATIONS = [
     page_url TEXT,
     page_html TEXT,
     kept_at INTEGER NOT NULL
-  );
-  `
+  )`
 ]
 
 export type CaptureType = 'png' | 'jpg'
@@ -109,42 +110,43 @@ const toReport = (row: ReportRow): Report => ({
 export const createStore = (db: Database) => {
   const reports = (where: string, ...values: (string | number)[]) =>
     (
-      db
-        .prepare(`SELECT * FROM plugin_diagnostic_reports ${where} ORDER BY created_at, id`)
-        .all(...values) as unknown as ReportRow[]
+      db.query(
+        `SELECT * FROM plugin_diagnostic_reports ${where} ORDER BY created_at, id`,
+        values
+      ) as unknown as ReportRow[]
     ).map(toReport)
 
   const kept = (articleId: string) =>
-    db.prepare('SELECT 1 FROM plugin_diagnostic_articles WHERE article_id = ?').get(articleId) !== undefined
+    db.get('SELECT 1 FROM plugin_diagnostic_articles WHERE article_id = ?', [articleId]) !== null
 
   return {
     kept,
 
     keep: (article: PluginArticle, page: { url: string; html: string } | null, now: number) => {
-      db.prepare(
+      db.run(
         `INSERT OR REPLACE INTO plugin_diagnostic_articles
            (article_id, title, url, source_id, source_name, published_at, status, text_length, extracted_html,
             page_url, page_html, kept_at)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
-      ).run(
-        article.id,
-        article.title,
-        article.url,
-        article.sourceId,
-        article.sourceName,
-        article.publishedAt,
-        article.status,
-        article.text?.textLength ?? null,
-        article.text?.contentHtml ?? null,
-        page?.url ?? null,
-        page?.html ?? null,
-        now
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        [
+          article.id,
+          article.title,
+          article.url,
+          article.sourceId,
+          article.sourceName,
+          article.publishedAt,
+          article.status,
+          article.text?.textLength ?? null,
+          article.text?.contentHtml ?? null,
+          page?.url ?? null,
+          page?.html ?? null,
+          now
+        ]
       )
     },
 
     article: (articleId: string) => {
-      const row = db.prepare('SELECT * FROM plugin_diagnostic_articles WHERE article_id = ?').get(articleId) as
-        Record<string, string | number | null> | undefined
+      const row = db.get('SELECT * FROM plugin_diagnostic_articles WHERE article_id = ?', [articleId])
       if (!row) return null
       return {
         articleId: String(row.article_id),
@@ -164,13 +166,11 @@ export const createStore = (db: Database) => {
 
     add: (report: { articleId: string; auto: boolean; issues: readonly Issue[]; note?: string | null; now: number }) =>
       Number(
-        db
-          .prepare(
-            `INSERT INTO plugin_diagnostic_reports (article_id, auto, issues, note, created_at)
-             VALUES (?, ?, ?, ?, ?)`
-          )
-          .run(report.articleId, report.auto ? 1 : 0, JSON.stringify(report.issues), report.note ?? null, report.now)
-          .lastInsertRowid
+        db.run(
+          `INSERT INTO plugin_diagnostic_reports (article_id, auto, issues, note, created_at)
+           VALUES (?, ?, ?, ?, ?)`,
+          [report.articleId, report.auto ? 1 : 0, JSON.stringify(report.issues), report.note ?? null, report.now]
+        ).lastInsertRowid
       ),
 
     get: (id: number) => reports('WHERE id = ?', id)[0] ?? null,
@@ -179,33 +179,22 @@ export const createStore = (db: Database) => {
     reportedOn: (articleId: string) => reports('WHERE article_id = ? AND auto = 0', articleId),
 
     spottedOn: (articleId: string) =>
-      db.prepare('SELECT 1 FROM plugin_diagnostic_reports WHERE article_id = ? AND auto = 1').get(articleId) !==
-      undefined,
+      db.get('SELECT 1 FROM plugin_diagnostic_reports WHERE article_id = ? AND auto = 1', [articleId]) !== null,
 
     spottedCount: () =>
-      Number(
-        (
-          db.prepare('SELECT COUNT(*) AS count FROM plugin_diagnostic_reports WHERE auto = 1').get() as {
-            count: number
-          }
-        ).count
-      ),
+      Number(db.get('SELECT COUNT(*) AS count FROM plugin_diagnostic_reports WHERE auto = 1')?.count ?? 0),
 
     setCapture: (id: number, type: CaptureType, bytes: number) => {
-      db.prepare('UPDATE plugin_diagnostic_reports SET capture_type = ?, capture_bytes = ? WHERE id = ?').run(
-        type,
-        bytes,
-        id
-      )
+      db.run('UPDATE plugin_diagnostic_reports SET capture_type = ?, capture_bytes = ? WHERE id = ?', [type, bytes, id])
     },
 
     // Removes a report, and the article it was about once nothing else is said about it.
     remove: (id: number) => {
       const report = reports('WHERE id = ?', id)[0]
       if (!report) return null
-      db.prepare('DELETE FROM plugin_diagnostic_reports WHERE id = ?').run(id)
+      db.run('DELETE FROM plugin_diagnostic_reports WHERE id = ?', [id])
       if (reports('WHERE article_id = ?', report.articleId).length === 0)
-        db.prepare('DELETE FROM plugin_diagnostic_articles WHERE article_id = ?').run(report.articleId)
+        db.run('DELETE FROM plugin_diagnostic_articles WHERE article_id = ?', [report.articleId])
       return report
     },
 
@@ -218,16 +207,17 @@ export const createStore = (db: Database) => {
         byArticle.set(report.articleId, [...(byArticle.get(report.articleId) ?? []), report])
       const rows: ReportedArticle[] = []
       for (const [articleId, said] of byArticle) {
-        const article = db
-          .prepare('SELECT title, source_id, source_name FROM plugin_diagnostic_articles WHERE article_id = ?')
-          .get(articleId) as { title: string; source_id: string; source_name: string } | undefined
+        const article = db.get(
+          'SELECT title, source_id, source_name FROM plugin_diagnostic_articles WHERE article_id = ?',
+          [articleId]
+        )
         // Kept before its first report is written, so always there.
         if (!article) continue
         rows.push({
           articleId,
-          title: article.title,
-          sourceId: article.source_id,
-          sourceName: article.source_name,
+          title: String(article.title),
+          sourceId: String(article.source_id),
+          sourceName: String(article.source_name),
           issues: [...new Set(said.flatMap(report => report.issues))],
           auto: said.every(report => report.auto),
           captures: said.filter(report => report.capture).length,
@@ -239,20 +229,17 @@ export const createStore = (db: Database) => {
 
     // What the pack holds, before it is compressed: the pages, the texts and the captures.
     bytes: () => {
-      const texts = db
-        .prepare(
-          `SELECT COALESCE(SUM(COALESCE(LENGTH(CAST(extracted_html AS BLOB)), 0) + COALESCE(LENGTH(CAST(page_html AS BLOB)), 0)), 0) AS bytes
-           FROM plugin_diagnostic_articles`
-        )
-        .get() as { bytes: number }
-      const captures = db
-        .prepare('SELECT COALESCE(SUM(capture_bytes), 0) AS bytes FROM plugin_diagnostic_reports')
-        .get() as { bytes: number }
-      return Number(texts.bytes) + Number(captures.bytes)
+      const texts = db.get(
+        `SELECT COALESCE(SUM(COALESCE(LENGTH(CAST(extracted_html AS BLOB)), 0) + COALESCE(LENGTH(CAST(page_html AS BLOB)), 0)), 0) AS bytes
+         FROM plugin_diagnostic_articles`
+      )
+      const captures = db.get('SELECT COALESCE(SUM(capture_bytes), 0) AS bytes FROM plugin_diagnostic_reports')
+      return Number(texts?.bytes ?? 0) + Number(captures?.bytes ?? 0)
     },
 
     clear: () => {
-      db.exec('DELETE FROM plugin_diagnostic_reports; DELETE FROM plugin_diagnostic_articles')
+      db.run('DELETE FROM plugin_diagnostic_reports')
+      db.run('DELETE FROM plugin_diagnostic_articles')
     }
   }
 }
