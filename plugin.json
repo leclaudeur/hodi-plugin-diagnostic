@@ -1,10 +1,22 @@
 {
   "id": "diagnostic",
   "name": "Diagnostic",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Signale ce que le lecteur rate sur un article, et prépare un pack pour le corriger.",
-  "api": 1,
+  "api": 2,
   "audience": "admin",
-  "menu": { "group": "household", "after": "ai" },
-  "settings": [{ "key": "autoSignals", "type": "boolean", "default": true }]
+  "permissions": {
+    "articles": true
+  },
+  "menu": {
+    "group": "household",
+    "after": "ai"
+  },
+  "settings": [
+    {
+      "key": "autoSignals",
+      "type": "boolean",
+      "default": true
+    }
+  ]
 }

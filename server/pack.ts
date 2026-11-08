@@ -1,5 +1,3 @@
-import { type Zippable, strToU8, zipSync } from 'fflate'
-import type { CaptureFiles } from './captures.ts'
 import type { Store } from './store.ts'
 
 const README = `Hodi diagnostic pack
@@ -14,20 +12,23 @@ One folder per article reported in Réglages > Diagnostic, or spotted by Hodi al
 Give the whole pack to whoever fixes the reader (server/news/extract.ts) or the sources (sources.yml).
 `
 
-// "2026-11-05", the day the pack is made, for its name.
-export const packName = (now: number) => `hodi-diagnostic-${new Date(now).toISOString().slice(0, 10)}.zip`
+// "hodi-diagnostic-2026-11-05", the day the pack is made: Hodi adds .zip.
+export const packName = (now: number) => `hodi-diagnostic-${new Date(now).toISOString().slice(0, 10)}`
 
-// Everything the plugin kept, as a zip: the pack the admin downloads and sends.
-export const buildPack = (store: Store, captures: CaptureFiles, now: number) => {
-  const files: Zippable = { 'README.txt': strToU8(README) }
+type Entry = { path: string; text: string } | { path: string; blob: { sql: string; params: (string | number)[] } }
+
+// Everything the plugin kept, as the files of the zip Hodi builds. The pages and the screenshots are read by Hodi
+// from the plugin's database as it writes the zip: they never pass through the plugin's memory.
+export const packEntries = (store: Store, now: number): Entry[] => {
+  const entries: Entry[] = [{ path: 'README.txt', text: README }]
   const reports = store.all()
-  const rows = store.list()
   const index: unknown[] = []
 
-  rows.forEach((row, at) => {
+  store.list().forEach((row, at) => {
     const article = store.article(row.articleId)
     if (!article) return
-    const folder = `${String(at + 1).padStart(3, '0')}-${row.articleId}`
+    // Folder names keep to what a zip from Hodi allows: letters, digits, dots, dashes and underscores.
+    const folder = `${String(at + 1).padStart(3, '0')}-${row.articleId.replace(/[^A-Za-z0-9._-]/g, '_')}`
     const said = reports.filter(report => report.articleId === row.articleId)
     const report = {
       article: {
@@ -49,19 +50,26 @@ export const buildPack = (store: Store, captures: CaptureFiles, now: number) => 
         at: new Date(report.createdAt).toISOString()
       }))
     }
-    files[`${folder}/report.json`] = strToU8(`${JSON.stringify(report, null, 2)}\n`)
-    if (article.pageHtml !== null) files[`${folder}/page.html`] = strToU8(article.pageHtml)
-    if (article.extractedHtml !== null) files[`${folder}/extracted.html`] = strToU8(article.extractedHtml)
+    entries.push({ path: `${folder}/report.json`, text: `${JSON.stringify(report, null, 2)}\n` })
+    const column = (name: 'page_html' | 'extracted_html') => ({
+      sql: `SELECT ${name} FROM plugin_diagnostic_articles WHERE article_id = ?`,
+      params: [article.articleId]
+    })
+    if (article.hasPage) entries.push({ path: `${folder}/page.html`, blob: column('page_html') })
+    if (article.hasText) entries.push({ path: `${folder}/extracted.html`, blob: column('extracted_html') })
     for (const { id, capture } of said) {
-      const bytes = capture ? captures.read(id, capture.type) : null
-      // Already compressed: stored as they are.
-      if (bytes && capture) files[`${folder}/capture-${id}.${capture.type}`] = [bytes, { level: 0 }]
+      if (!capture) continue
+      entries.push({
+        path: `${folder}/capture-${id}.${capture.type}`,
+        blob: { sql: 'SELECT data FROM plugin_diagnostic_captures WHERE report_id = ?', params: [id] }
+      })
     }
     index.push({ folder, title: article.title, source: article.sourceName, issues: row.issues })
   })
 
-  files['index.json'] = strToU8(
-    `${JSON.stringify({ madeAt: new Date(now).toISOString(), articles: index }, null, 2)}\n`
-  )
-  return zipSync(files, { level: 6 })
+  entries.push({
+    path: 'index.json',
+    text: `${JSON.stringify({ madeAt: new Date(now).toISOString(), articles: index }, null, 2)}\n`
+  })
+  return entries
 }
