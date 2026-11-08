@@ -1,5 +1,7 @@
 import type { PluginArticle, PluginContext, PluginRequest, ServerPlugin } from '@hodi-app/plugin-sdk/server'
+import { CAPTURE_MAX_BYTES, captureType } from './captures.ts'
 import { NOTE_MAX, PICKED, type Picked } from './issues.ts'
+import { packEntries, packName } from './pack.ts'
 import { spotted } from './signals.ts'
 import { MIGRATIONS, type Store, createStore } from './store.ts'
 
@@ -10,9 +12,10 @@ export const SPOTTED_MAX = 300
 // GET    /summary                  the page's numbers and rows
 // GET    /articles/:id/reports     the admin's reports on an article, for the dialog
 // POST   /reports                  a new report { articleId, issues, note? }
+// PUT    /reports/:id/capture      its screenshot, the PNG or JPG file as the body
 // DELETE /reports/:id              one report
 // DELETE /reports                  all of them, once the pack is sent
-// The screenshot (PUT /reports/:id/capture) and the pack (GET /pack) wait for binary bodies and the zip Hodi builds.
+// GET    /pack                     the zip to send, which Hodi builds
 
 // One store per context: the context lives as long as the plugin's sandbox.
 const stores = new WeakMap<PluginContext, Store>()
@@ -82,6 +85,22 @@ const plugin: ServerPlugin = {
       return { status: 201, body: { id } }
     },
 
+    'PUT /reports/:id/capture': {
+      raw: true,
+      maxBody: CAPTURE_MAX_BYTES,
+      handler: async (request, ctx) => {
+        const store = storeOf(ctx)
+        const id = reportId(request)
+        const report = id === null ? null : store.get(id)
+        if (!report || report.auto) return { status: 404, body: { error: 'not_found' } }
+        const bytes = request.body as Uint8Array
+        const type = captureType(bytes)
+        if (!type) return { status: 415, body: { error: 'not_an_image' } }
+        store.setCapture(report.id, type, bytes)
+        return { status: 204 }
+      }
+    },
+
     'DELETE /reports/:id': async (request, ctx) => {
       const id = reportId(request)
       const removed = id === null ? null : storeOf(ctx).remove(id)
@@ -92,6 +111,11 @@ const plugin: ServerPlugin = {
     'DELETE /reports': async (_request, ctx) => {
       storeOf(ctx).clear()
       return { status: 204 }
+    },
+
+    'GET /pack': async (_request, ctx) => {
+      const now = Date.now()
+      return { zip: { filename: packName(now), entries: packEntries(storeOf(ctx), now) } }
     }
   },
 

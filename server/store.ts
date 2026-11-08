@@ -17,7 +17,7 @@ export const MIGRATIONS = [
     issues TEXT NOT NULL,
     -- The admin's words: a precision, or what "Autre" is.
     note TEXT,
-    -- The screenshot, kept in the plugin's folder as captures/<id>.<png|jpg>.
+    -- The screenshot's type and size; its bytes are in plugin_diagnostic_captures.
     capture_type TEXT,
     capture_bytes INTEGER,
     created_at INTEGER NOT NULL
@@ -38,7 +38,15 @@ export const MIGRATIONS = [
     page_url TEXT,
     page_html TEXT,
     kept_at INTEGER NOT NULL
-  )`
+  )`,
+  // The screenshots' bytes, in the plugin's own database since plugin API 2.
+  `CREATE TABLE IF NOT EXISTS plugin_diagnostic_captures (
+    report_id INTEGER PRIMARY KEY,
+    data BLOB NOT NULL
+  )`,
+  // The screenshots of plugin API 1 were files Hodi does not carry over: their reports no longer say they have one.
+  `UPDATE plugin_diagnostic_reports SET capture_type = NULL, capture_bytes = NULL
+   WHERE capture_type IS NOT NULL AND id NOT IN (SELECT report_id FROM plugin_diagnostic_captures)`
 ]
 
 export type CaptureType = 'png' | 'jpg'
@@ -62,9 +70,10 @@ export interface KeptArticle {
   publishedAt: string | null
   status: string
   textLength: number | null
-  extractedHtml: string | null
+  // Whether the reader's text and the page are kept: the pack's zip reads them from the database itself.
+  hasText: boolean
   pageUrl: string | null
-  pageHtml: string | null
+  hasPage: boolean
   keptAt: number
 }
 
@@ -146,7 +155,13 @@ export const createStore = (db: Database) => {
     },
 
     article: (articleId: string) => {
-      const row = db.get('SELECT * FROM plugin_diagnostic_articles WHERE article_id = ?', [articleId])
+      // Without the HTML itself, which can weigh hundreds of KB per article.
+      const row = db.get(
+        `SELECT article_id, title, url, source_id, source_name, published_at, status, text_length, page_url, kept_at,
+                extracted_html IS NOT NULL AS has_text, page_html IS NOT NULL AS has_page
+         FROM plugin_diagnostic_articles WHERE article_id = ?`,
+        [articleId]
+      )
       if (!row) return null
       return {
         articleId: String(row.article_id),
@@ -157,9 +172,9 @@ export const createStore = (db: Database) => {
         publishedAt: row.published_at === null ? null : String(row.published_at),
         status: String(row.status),
         textLength: row.text_length === null ? null : Number(row.text_length),
-        extractedHtml: row.extracted_html === null ? null : String(row.extracted_html),
+        hasText: Number(row.has_text) === 1,
         pageUrl: row.page_url === null ? null : String(row.page_url),
-        pageHtml: row.page_html === null ? null : String(row.page_html),
+        hasPage: Number(row.has_page) === 1,
         keptAt: Number(row.kept_at)
       } satisfies KeptArticle
     },
@@ -184,14 +199,20 @@ export const createStore = (db: Database) => {
     spottedCount: () =>
       Number(db.get('SELECT COUNT(*) AS count FROM plugin_diagnostic_reports WHERE auto = 1')?.count ?? 0),
 
-    setCapture: (id: number, type: CaptureType, bytes: number) => {
-      db.run('UPDATE plugin_diagnostic_reports SET capture_type = ?, capture_bytes = ? WHERE id = ?', [type, bytes, id])
+    setCapture: (id: number, type: CaptureType, bytes: Uint8Array) => {
+      db.run('INSERT OR REPLACE INTO plugin_diagnostic_captures (report_id, data) VALUES (?, ?)', [id, bytes])
+      db.run('UPDATE plugin_diagnostic_reports SET capture_type = ?, capture_bytes = ? WHERE id = ?', [
+        type,
+        bytes.length,
+        id
+      ])
     },
 
     // Removes a report, and the article it was about once nothing else is said about it.
     remove: (id: number) => {
       const report = reports('WHERE id = ?', id)[0]
       if (!report) return null
+      db.run('DELETE FROM plugin_diagnostic_captures WHERE report_id = ?', [id])
       db.run('DELETE FROM plugin_diagnostic_reports WHERE id = ?', [id])
       if (reports('WHERE article_id = ?', report.articleId).length === 0)
         db.run('DELETE FROM plugin_diagnostic_articles WHERE article_id = ?', [report.articleId])
@@ -238,6 +259,7 @@ export const createStore = (db: Database) => {
     },
 
     clear: () => {
+      db.run('DELETE FROM plugin_diagnostic_captures')
       db.run('DELETE FROM plugin_diagnostic_reports')
       db.run('DELETE FROM plugin_diagnostic_articles')
     }

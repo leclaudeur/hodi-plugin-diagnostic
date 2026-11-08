@@ -31,18 +31,19 @@ Drop it in a conversation with whoever fixes Hodi's reader (`server/news/extract
 
 ## Requirements
 
-Hodi with the plugin API 1 and `@hodi-app/plugin-sdk` 0.2.0 or later: the reader action, plugin pages in Réglages and
-`ctx.articles` came with it.
+Hodi with the plugin API 2 and `@hodi-app/plugin-sdk` 0.4.0 or later: the server part runs in Hodi's sandbox, with its
+own database, and asks for `permissions.articles`. Moving from 0.1.0 (plugin API 1), Hodi copies the reports over but
+not the screenshots: empty Réglages › Diagnostic before upgrading if they matter.
 
 ## The folder
 
 ```text
-plugin.json          id diagnostic, audience admin, its menu entry, the "Repérer seul" option
+plugin.json          id diagnostic, audience admin, permissions.articles, its menu entry, the "Repérer seul" option
 server/index.ts      the routes and onArticle
-server/store.ts      its two tables: the reports, and the articles kept for the pack
+server/store.ts      its tables: the reports, the articles kept for the pack, and the screenshots' bytes
 server/signals.ts    what Hodi spots alone
-server/captures.ts   the screenshots, in the plugin's own folder (captures/<report id>.<png|jpg>)
-server/pack.ts       the zip
+server/captures.ts   what a screenshot may be (PNG or JPG, 5 MB at most)
+server/pack.ts       the files of the zip, which Hodi builds from the plugin's database
 web/                 the reader's button, the dialog, the screenshot field and the page
 locales/             French (the reference, « tu ») and English
 test/                node:test, on the server part
