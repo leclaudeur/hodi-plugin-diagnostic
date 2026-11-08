@@ -46,8 +46,20 @@ export const MIGRATIONS = [
   )`,
   // The screenshots of plugin API 1 were files Hodi does not carry over: their reports no longer say they have one.
   `UPDATE plugin_diagnostic_reports SET capture_type = NULL, capture_bytes = NULL
-   WHERE capture_type IS NOT NULL AND id NOT IN (SELECT report_id FROM plugin_diagnostic_captures)`
+   WHERE capture_type IS NOT NULL AND id NOT IN (SELECT report_id FROM plugin_diagnostic_captures)`,
+  // The household a report was made in: one plugin serves every household of the server. Null for what Hodi spotted
+  // alone, which is about the reader and not any household, and which only the server's admin sees.
+  'ALTER TABLE plugin_diagnostic_reports ADD COLUMN household_id INTEGER',
+  // Before plugin API 2 there was one household per server: the admin's reports were all made in the first one.
+  'UPDATE plugin_diagnostic_reports SET household_id = 1 WHERE auto = 0 AND household_id IS NULL',
+  'CREATE INDEX IF NOT EXISTS plugin_diagnostic_reports_household ON plugin_diagnostic_reports (household_id)'
 ]
+
+// Who looks: the reports made in their household, and what Hodi spotted alone when they run the server.
+export interface Scope {
+  householdId: number
+  serverAdmin: boolean
+}
 
 export type CaptureType = 'png' | 'jpg'
 
@@ -116,14 +128,27 @@ const toReport = (row: ReportRow): Report => ({
   createdAt: row.created_at
 })
 
-export const createStore = (db: Database) => {
+export const createStore = (db: Database, scope: Scope | null) => {
+  // The reports the scope sees; none without one (the hook only writes what Hodi spots).
+  const visible = scope
+    ? {
+        sql: '(household_id = ? OR (household_id IS NULL AND ? = 1))',
+        params: [scope.householdId, scope.serverAdmin ? 1 : 0]
+      }
+    : { sql: '0', params: [] }
   const reports = (where: string, ...values: (string | number)[]) =>
     (
       db.query(
-        `SELECT * FROM plugin_diagnostic_reports ${where} ORDER BY created_at, id`,
-        values
+        `SELECT * FROM plugin_diagnostic_reports WHERE ${visible.sql} ${where ? `AND ${where}` : ''}
+         ORDER BY created_at, id`,
+        [...visible.params, ...values]
       ) as unknown as ReportRow[]
     ).map(toReport)
+  // Kept articles are shared by the households: one goes once no report of any household is about it.
+  const dropUnreported = () =>
+    db.run(
+      'DELETE FROM plugin_diagnostic_articles WHERE article_id NOT IN (SELECT article_id FROM plugin_diagnostic_reports)'
+    )
 
   const kept = (articleId: string) =>
     db.get('SELECT 1 FROM plugin_diagnostic_articles WHERE article_id = ?', [articleId]) !== null
@@ -182,16 +207,24 @@ export const createStore = (db: Database) => {
     add: (report: { articleId: string; auto: boolean; issues: readonly Issue[]; note?: string | null; now: number }) =>
       Number(
         db.run(
-          `INSERT INTO plugin_diagnostic_reports (article_id, auto, issues, note, created_at)
-           VALUES (?, ?, ?, ?, ?)`,
-          [report.articleId, report.auto ? 1 : 0, JSON.stringify(report.issues), report.note ?? null, report.now]
+          `INSERT INTO plugin_diagnostic_reports (article_id, auto, issues, note, created_at, household_id)
+           VALUES (?, ?, ?, ?, ?, ?)`,
+          [
+            report.articleId,
+            report.auto ? 1 : 0,
+            JSON.stringify(report.issues),
+            report.note ?? null,
+            report.now,
+            // What Hodi spots belongs to no household.
+            report.auto ? null : (scope?.householdId ?? null)
+          ]
         ).lastInsertRowid
       ),
 
-    get: (id: number) => reports('WHERE id = ?', id)[0] ?? null,
+    get: (id: number) => reports('id = ?', id)[0] ?? null,
 
     // The admin's reports on an article, for the dialog: the spotted ones are not theirs to remove there.
-    reportedOn: (articleId: string) => reports('WHERE article_id = ? AND auto = 0', articleId),
+    reportedOn: (articleId: string) => reports('article_id = ? AND auto = 0', articleId),
 
     spottedOn: (articleId: string) =>
       db.get('SELECT 1 FROM plugin_diagnostic_reports WHERE article_id = ? AND auto = 1', [articleId]) !== null,
@@ -210,12 +243,11 @@ export const createStore = (db: Database) => {
 
     // Removes a report, and the article it was about once nothing else is said about it.
     remove: (id: number) => {
-      const report = reports('WHERE id = ?', id)[0]
+      const report = reports('id = ?', id)[0]
       if (!report) return null
       db.run('DELETE FROM plugin_diagnostic_captures WHERE report_id = ?', [id])
       db.run('DELETE FROM plugin_diagnostic_reports WHERE id = ?', [id])
-      if (reports('WHERE article_id = ?', report.articleId).length === 0)
-        db.run('DELETE FROM plugin_diagnostic_articles WHERE article_id = ?', [report.articleId])
+      dropUnreported()
       return report
     },
 
@@ -252,16 +284,26 @@ export const createStore = (db: Database) => {
     bytes: () => {
       const texts = db.get(
         `SELECT COALESCE(SUM(COALESCE(LENGTH(CAST(extracted_html AS BLOB)), 0) + COALESCE(LENGTH(CAST(page_html AS BLOB)), 0)), 0) AS bytes
-         FROM plugin_diagnostic_articles`
+         FROM plugin_diagnostic_articles
+         WHERE article_id IN (SELECT article_id FROM plugin_diagnostic_reports WHERE ${visible.sql})`,
+        visible.params
       )
-      const captures = db.get('SELECT COALESCE(SUM(capture_bytes), 0) AS bytes FROM plugin_diagnostic_reports')
+      const captures = db.get(
+        `SELECT COALESCE(SUM(capture_bytes), 0) AS bytes FROM plugin_diagnostic_reports WHERE ${visible.sql}`,
+        visible.params
+      )
       return Number(texts?.bytes ?? 0) + Number(captures?.bytes ?? 0)
     },
 
+    // Empties what the scope sees; the other households' reports stay.
     clear: () => {
-      db.run('DELETE FROM plugin_diagnostic_captures')
-      db.run('DELETE FROM plugin_diagnostic_reports')
-      db.run('DELETE FROM plugin_diagnostic_articles')
+      db.run(
+        `DELETE FROM plugin_diagnostic_captures
+         WHERE report_id IN (SELECT id FROM plugin_diagnostic_reports WHERE ${visible.sql})`,
+        visible.params
+      )
+      db.run(`DELETE FROM plugin_diagnostic_reports WHERE ${visible.sql}`, visible.params)
+      dropUnreported()
     }
   }
 }

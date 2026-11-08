@@ -14,7 +14,8 @@ on an article, and gathers everything needed to fix it into one pack to send.
   reported or spotted, and "Vider" once the pack is sent and the fixes are in.
 
 Only the admin sees any of it: the plugin's audience is `admin`, so Hodi neither loads it nor answers its routes for
-other profiles. It makes no AI call.
+other profiles. On a server with several households, each household's admin sees only their own reports, and what
+Hodi spots alone (about the reader, not a household) is shown only to the server's admin. It makes no AI call.
 
 ## The pack
 

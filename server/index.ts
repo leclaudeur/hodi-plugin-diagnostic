@@ -17,13 +17,12 @@ export const SPOTTED_MAX = 300
 // DELETE /reports                  all of them, once the pack is sent
 // GET    /pack                     the zip to send, which Hodi builds
 
-// One store per context: the context lives as long as the plugin's sandbox.
-const stores = new WeakMap<PluginContext, Store>()
-const storeOf = (ctx: PluginContext) => {
-  let store = stores.get(ctx)
-  if (!store) stores.set(ctx, (store = createStore(ctx.db)))
-  return store
-}
+// What the caller sees: the reports of their household, and what Hodi spotted when they run the server. One plugin
+// serves every household of the server from one database.
+const storeOf = (ctx: PluginContext, { who }: PluginRequest) =>
+  who.householdId === null ? null : createStore(ctx.db, { householdId: who.householdId, serverAdmin: who.serverAdmin })
+
+const NO_HOUSEHOLD = { status: 403, body: { error: 'no_household' } } as const
 
 const text = (value: unknown, max: number) => {
   if (value === undefined || value === null) return null
@@ -44,28 +43,32 @@ const plugin: ServerPlugin = {
   migrations: MIGRATIONS,
 
   routes: {
-    'GET /summary': async (_request, ctx) => {
-      const store = storeOf(ctx)
+    'GET /summary': async (request, ctx) => {
+      const store = storeOf(ctx, request)
+      if (!store) return NO_HOUSEHOLD
       const rows = store.list()
       return { body: { articles: rows.length, bytes: store.bytes(), rows } }
     },
 
-    'GET /articles/:id/reports': async (request, ctx) => ({
-      body: {
-        reports: storeOf(ctx)
-          .reportedOn(request.params.id ?? '')
-          .map(({ id, issues, note, capture, createdAt }) => ({
+    'GET /articles/:id/reports': async (request, ctx) => {
+      const store = storeOf(ctx, request)
+      if (!store) return NO_HOUSEHOLD
+      return {
+        body: {
+          reports: store.reportedOn(request.params.id ?? '').map(({ id, issues, note, capture, createdAt }) => ({
             id,
             issues,
             note,
             capture: capture !== null,
             createdAt
           }))
+        }
       }
-    }),
+    },
 
     'POST /reports': async (request, ctx) => {
-      const store = storeOf(ctx)
+      const store = storeOf(ctx, request)
+      if (!store) return NO_HOUSEHOLD
       const body = (request.body ?? {}) as Record<string, unknown>
       const issues = Array.isArray(body.issues) ? [...new Set(body.issues)] : []
       const note = text(body.note, NOTE_MAX)
@@ -89,7 +92,8 @@ const plugin: ServerPlugin = {
       raw: true,
       maxBody: CAPTURE_MAX_BYTES,
       handler: async (request, ctx) => {
-        const store = storeOf(ctx)
+        const store = storeOf(ctx, request)
+        if (!store) return NO_HOUSEHOLD
         const id = reportId(request)
         const report = id === null ? null : store.get(id)
         if (!report || report.auto) return { status: 404, body: { error: 'not_found' } }
@@ -102,37 +106,45 @@ const plugin: ServerPlugin = {
     },
 
     'DELETE /reports/:id': async (request, ctx) => {
+      const store = storeOf(ctx, request)
+      if (!store) return NO_HOUSEHOLD
       const id = reportId(request)
-      const removed = id === null ? null : storeOf(ctx).remove(id)
+      const removed = id === null ? null : store.remove(id)
       if (!removed) return { status: 404, body: { error: 'not_found' } }
       return { status: 204 }
     },
 
-    'DELETE /reports': async (_request, ctx) => {
-      storeOf(ctx).clear()
+    'DELETE /reports': async (request, ctx) => {
+      const store = storeOf(ctx, request)
+      if (!store) return NO_HOUSEHOLD
+      store.clear()
       return { status: 204 }
     },
 
-    'GET /pack': async (_request, ctx) => {
+    'GET /pack': async (request, ctx) => {
+      const store = storeOf(ctx, request)
+      if (!store) return NO_HOUSEHOLD
       const now = Date.now()
-      return { zip: { filename: packName(now), entries: packEntries(storeOf(ctx), now) } }
+      return { zip: { filename: packName(now), entries: packEntries(store, now) } }
     }
   },
 
-  // What Hodi spots alone, as it reads an article for the first time. The page is fetched again after the hook
-  // returns: Hodi's reader does not wait for it, and the sandbox gives that work the same time limit.
+  // What Hodi spots alone, as it reads an article for the first time. It belongs to no household. The page is fetched
+  // again before the hook returns: Hodi refuses ctx.articles to work left running after it, and the reader does not
+  // wait for the hook anyway.
   onArticle: async (article, ctx) => {
     if (ctx.settings().autoSignals === false) return
     const issues = spotted(article)
     if (issues.length === 0) return
-    const store = storeOf(ctx)
+    const store = createStore(ctx.db, null)
     if (store.spottedOn(article.id) || store.spottedCount() >= SPOTTED_MAX) return
-    void keep(ctx, store, article)
-      .then(() => {
-        // Checked again: the same article may have been read twice while its page came.
-        if (!store.spottedOn(article.id)) store.add({ articleId: article.id, auto: true, issues, now: Date.now() })
-      })
-      .catch(error => ctx.log(`could not keep ${article.url}: ${error instanceof Error ? error.message : error}`))
+    try {
+      await keep(ctx, store, article)
+      // Checked again: the same article may have been read twice while its page came.
+      if (!store.spottedOn(article.id)) store.add({ articleId: article.id, auto: true, issues, now: Date.now() })
+    } catch (error) {
+      ctx.log(`could not keep ${article.url}: ${error instanceof Error ? error.message : error}`)
+    }
   }
 }
 

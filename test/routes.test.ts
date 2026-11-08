@@ -42,16 +42,27 @@ describe('Diagnostic, moved from plugin API 1', () => {
     db.run(
       "INSERT INTO plugin_diagnostic_reports (article_id, auto, issues, capture_type, capture_bytes, created_at) VALUES ('a1', 0, '[\"images\"]', 'png', 11, 1)"
     )
+    db.run(
+      "INSERT INTO plugin_diagnostic_reports (article_id, auto, issues, created_at) VALUES ('a2', 1, '[\"short\"]', 2)"
+    )
     for (const step of plugin.migrations ?? []) db.run(step)
     assert.ok(rest.length > 0)
     assert.deepEqual(
-      { ...db.get('SELECT issues, capture_type, capture_bytes FROM plugin_diagnostic_reports') },
+      {
+        ...db.get(
+          'SELECT issues, capture_type, capture_bytes, household_id FROM plugin_diagnostic_reports WHERE auto = 0'
+        )
+      },
       {
         issues: '["images"]',
         capture_type: null,
-        capture_bytes: null
+        capture_bytes: null,
+        // One household per server before: its first.
+        household_id: 1
       }
     )
+    // What Hodi spotted stays the server's.
+    assert.equal(db.get('SELECT household_id FROM plugin_diagnostic_reports WHERE auto = 1')?.household_id, null)
   })
 })
 
@@ -76,6 +87,14 @@ describe('Diagnostic', () => {
   }
 
   // Calls a route as Hodi does once it matched it: method and path, the named parts, the JSON body or the bytes.
+  const ADMIN: PluginRequest['who'] = {
+    profileId: 1,
+    householdId: 1,
+    kind: 'adult',
+    householdAdmin: true,
+    serverAdmin: true
+  }
+  let who = ADMIN
   const answer = async (route: string, params: Record<string, string> = {}, body: unknown = null) => {
     const entry = plugin.routes?.[route]
     assert.ok(entry, `no route ${route}`)
@@ -87,7 +106,7 @@ describe('Diagnostic', () => {
       params,
       query: {},
       body,
-      who: { profileId: 1, householdId: 1, kind: 'adult', householdAdmin: true, serverAdmin: true }
+      who
     }
     return handler(request, ctx)
   }
@@ -121,10 +140,6 @@ describe('Diagnostic', () => {
     }
 
   before(() => {
-    for (const step of plugin.migrations ?? []) ctx.db.run(step)
-  })
-
-  it('runs its migrations once more without harm, as after Hodi copied its API 1 tables', () => {
     for (const step of plugin.migrations ?? []) ctx.db.run(step)
   })
 
@@ -198,8 +213,6 @@ describe('Diagnostic', () => {
   it('notes what Hodi spots alone once per article, while the setting is on', async () => {
     const tell = async (read: PluginArticle) => {
       await plugin.onArticle?.(read, ctx)
-      // What the hook left running: the page, then the row.
-      await new Promise(resolve => setTimeout(resolve, 20))
     }
     await tell(article('a3', { status: 'failed', text: null }))
     await tell(article('a3', { status: 'failed', text: null }))
@@ -213,6 +226,48 @@ describe('Diagnostic', () => {
       rows.map(row => [row.articleId, row.issues]),
       [['a3', ['blocked']]]
     )
+  })
+
+  it("keeps each household's reports apart, and what Hodi spotted for the server's admin", async () => {
+    const mine = (await summary()).rows.map(row => row.articleId)
+    assert.ok(mine.includes('a1') && mine.includes('a3'))
+    const { body } = await call('GET /articles/:id/reports', { id: 'a1' })
+    const theirs = String((body?.reports as { id: number }[])[0]?.id)
+
+    // The admin of another household, who does not run the server.
+    who = { profileId: 7, householdId: 2, kind: 'adult', householdAdmin: true, serverAdmin: false }
+    try {
+      assert.deepEqual(await summary(), { articles: 0, bytes: 0, rows: [] })
+      assert.deepEqual((await call('GET /articles/:id/reports', { id: 'a1' })).body, { reports: [] })
+      assert.equal((await call('DELETE /reports/:id', { id: theirs })).status, 404)
+      assert.equal((await call('PUT /reports/:id/capture', { id: theirs }, PNG)).status, 404)
+      assert.equal((await post({ articleId: 'a1', issues: ['layout'] })).status, 201)
+      assert.deepEqual(
+        (await summary()).rows.map(row => [row.articleId, row.issues]),
+        [['a1', ['layout']]]
+      )
+      const { files } = await unzip('GET /pack')
+      const reports = [...files.keys()].filter(name => name.endsWith('/report.json'))
+      assert.equal(reports.length, 1)
+      const report = JSON.parse(files.get(reports[0]!) as string) as { reports: { issues: string[] }[] }
+      assert.deepEqual(
+        report.reports.map(said => said.issues),
+        [['layout']]
+      )
+      assert.equal((await call('DELETE /reports')).status, 204)
+      assert.deepEqual((await summary()).rows, [])
+    } finally {
+      who = ADMIN
+    }
+    // Emptying theirs left this one's, and the article both reported.
+    assert.deepEqual((await summary()).rows.map(row => row.articleId).sort(), [...mine].sort())
+
+    who = { ...ADMIN, householdId: null }
+    try {
+      assert.equal((await call('GET /summary')).status, 403)
+    } finally {
+      who = ADMIN
+    }
   })
 
   it('empties the list once the pack is sent', async () => {
