@@ -91,7 +91,8 @@ npm run build        # → dist/diagnostic-<version>.hodi-plugin, unsigned
 
 Diagnostic is one of Hodi's official plugins, so its releases are signed.
 
-1. Raise `version` in `plugin.json` and `package.json`, in a pull request.
+1. Raise `version` in `plugin.json` and `package.json`, and move the lines under « Unreleased » in
+   [CHANGELOG.md](CHANGELOG.md) under that version, in a pull request.
 2. Once it is merged, tag that exact version: `git tag v0.2.0 && git push origin v0.2.0`.
 3. CI builds the package with the repository's `SIGNING_KEY` secret and publishes the release.
 
