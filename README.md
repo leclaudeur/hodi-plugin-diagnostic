@@ -100,4 +100,6 @@ Diagnostic is one of Hodi's official plugins, so its releases are signed.
 
 ## License
 
-[MIT](LICENSE).
+Copyright © 2026 Anthony Du Pont.
+
+Diagnostic is free software under the [MIT license](LICENSE): you may **use, change and share** it freely.
