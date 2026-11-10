@@ -29,7 +29,6 @@ const ReportAction = ({ article }: { article: ReaderArticle }) => {
             : t('reader.reportedCount', { count: reports.length })}
       </ReaderButton>
       <ReportsDialog
-        article={article}
         open={listOpen}
         reports={reports}
         onClose={() => {

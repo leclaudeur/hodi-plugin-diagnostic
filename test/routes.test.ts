@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict'
 import { DatabaseSync, type SQLInputValue } from 'node:sqlite'
 import { before, describe, it } from 'node:test'
-import type { PluginArticle, PluginContext, PluginRequest, PluginResponse, SqlValue } from '@hodi-app/plugin-sdk/server'
+import type { PluginArticle, PluginContext, PluginRequest, SqlValue } from '@hodi-app/plugin-sdk/server'
 import plugin from '../server/index.ts'
 
 const article = (id: string, change: Partial<PluginArticle> = {}): PluginArticle => ({

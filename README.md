@@ -55,6 +55,7 @@ test/                node:test, on the server part
 ```bash
 npm ci
 npm run typecheck
+npm run lint
 npm test
 npm run format:check
 npm run build        # dist/diagnostic-<version>.hodi-plugin, unsigned
