@@ -1,80 +1,100 @@
-# Diagnostic
+<div align="center">
 
-A [Hodi](https://github.com/leclaudeur/hodi) plugin for the household's admin: it reports what the reader gets wrong
-on an article, and gathers everything needed to fix it into one pack to send.
+# 🩺 Diagnostic
 
-- **Signaler**, at the end of an article beside "Lire l'original". The dialog asks what is wrong (texte coupé,
-  éléments en trop, images manquantes, mise en page cassée, mauvais contenu, or "Autre", said in the note), and takes a
-  note and a screenshot (PNG or JPG, 5 MB at most). The same article can be reported again for something else; the
-  button then says "Signalé · 2", and the dialog lists the reports already made, each of which can be taken back.
-- **Repéré seul**: as Hodi reads an article for the first time, the plugin notes on its own a site that did not answer,
-  a text too short to be whole, and the site's leftovers in the text ("Lire aussi", a breadcrumb, a share bar). The
-  "Repérer seul" option turns this off. It keeps at most 300 such articles.
-- **Réglages › Diagnostic** (in the Foyer group, after IA et crédits): the pack to download, the list of what was
-  reported or spotted, and "Vider" once the pack is sent and the fixes are in.
+**A [Hodi](https://github.com/leclaudeur/hodi) plugin to report what the reader gets wrong on an article.**<br>
+It gathers everything needed to fix it into one pack, ready to send.
 
-Only the admin sees any of it: the plugin's audience is `admin`, so Hodi neither loads it nor answers its routes for
-other profiles. On a server with several households, each household's admin sees only their own reports, and what
-Hodi spots alone (about the reader, not a household) is shown only to the server's admin. It makes no AI call.
+[![CI](https://github.com/leclaudeur/hodi-plugin-diagnostic/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/leclaudeur/hodi-plugin-diagnostic/actions/workflows/ci.yml)
+[![Latest release](https://img.shields.io/github/v/release/leclaudeur/hodi-plugin-diagnostic?sort=semver)](https://github.com/leclaudeur/hodi-plugin-diagnostic/releases)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
+
+[**Install**](#install) · [**The pack**](#the-pack) · [**Develop**](#develop) · [**Release**](#release-a-signed-version)
+
+</div>
+
+## What it does
+
+Sometimes Hodi's reader cuts a text, keeps a share bar or loses the images. Diagnostic helps you show exactly what
+went wrong:
+
+- 🚩 **Report**: a button at the end of each article. Tick what is wrong, add a note and a screenshot if you like.
+- 👀 **Spotted by Hodi**: the plugin also notes, on its own, a blocked site, a text too short to be whole, or page
+  leftovers such as "Read more". It keeps 300 articles at most.
+- 📦 **The pack**: _Settings › Diagnostic_ lists every report and downloads them all as one zip file.
+
+It is for the household's **admin only**: other profiles never see it. It makes **no AI call**.
+
+## Install
+
+You need a Hodi with plugin API 2, where you are the server's admin.
+
+1. Download the `.hodi-plugin` file of the
+   [latest release](https://github.com/leclaudeur/hodi-plugin-diagnostic/releases/latest).
+2. In Hodi, open _Server › Plugins_ and click **Add a plugin**. Choose the file.
+3. Hodi restarts with it. **Diagnostic** shows in _Settings_, in the _Household_ group, after _AI & credits_.
+
+Releases are signed, so Hodi installs them as _Verified_. Coming from 0.1.0? Its screenshots aren't carried over:
+download the pack first if you need them.
 
 ## The pack
 
-`hodi-diagnostic-<date>.zip` holds one folder per article:
+Send `hodi-diagnostic-<date>.zip` to whoever fixes Hodi's reader (`server/news/extract.ts`) or its sources
+(`sources.yml`). It holds one folder per article:
 
 ```text
-report.json      the article, every report on it (issues, note, by the admin or by Hodi) and when
-page.html        its page as its site served it when it was first reported
+report.json      the article and every report on it: issues, note, who, when
+page.html        the page as its site served it at the first report
 extracted.html   the text Hodi's reader took from it
 capture-<n>.png  the screenshots
 ```
 
-Drop it in a conversation with whoever fixes Hodi's reader (`server/news/extract.ts`) or its sources (`sources.yml`).
+Once the fixes are in, click **Empty** in _Settings › Diagnostic_.
 
-## Requirements
+On a server with several households, each admin sees only their household's reports. What Hodi spots on its own is
+about the reader, not a household, so only the server's admin sees it.
 
-Hodi with the plugin API 2 and `@hodi-app/plugin-sdk` 0.4.0 or later: the server part runs in Hodi's sandbox, with its
-own database, and asks for `permissions.articles`. Moving from 0.1.0 (plugin API 1), Hodi copies the reports over but
-not the screenshots: empty Réglages › Diagnostic before upgrading if they matter.
+## Develop
 
-## The folder
-
-```text
-plugin.json          id diagnostic, audience admin, permissions.articles, its menu entry, the "Repérer seul" option
-server/index.ts      the routes and onArticle
-server/store.ts      its tables: the reports, the articles kept for the pack, and the screenshots' bytes
-server/signals.ts    what Hodi spots alone
-server/captures.ts   what a screenshot may be (PNG or JPG, 5 MB at most)
-server/pack.ts       the files of the zip, which Hodi builds from the plugin's database
-web/                 the reader's button, the dialog, the screenshot field and the page
-locales/             French (the reference, « tu ») and English
-test/                node:test, on the server part
-```
-
-## Checks
+Requires **Node.js 24** or later.
 
 ```bash
 npm ci
-npm run typecheck
-npm run lint
-npm test
-npm run format:check
-npm run build        # dist/diagnostic-<version>.hodi-plugin, unsigned
+npm test       # node:test, on the server part
 ```
 
-GitHub Actions runs them on every push and pull request, and attaches the unsigned package to the run.
+To try it in a test Hodi, use developer mode as the
+[plugin template](https://github.com/leclaudeur/hodi-plugin-template#quick-start) explains.
 
-## Releasing a signed version
+```text
+plugin.json          id, audience admin, permissions.articles, menu entry, the "Spot on its own" option
+server/index.ts      the routes, and onArticle for what Hodi spots
+server/store.ts      its tables: reports, kept articles, screenshots
+server/signals.ts    what Hodi spots on its own
+server/pack.ts       the files of the zip
+web/                 the reader's button, the dialogs and the Settings page
+locales/             French (the reference) and English
+```
 
-Diagnostic is one of Hodi's official plugins: its releases are signed, so Hodi installs them as "Vérifié".
+Run the checks before each pull request. GitHub Actions runs them on every push:
 
-1. Raise `version` in `plugin.json` and `package.json` in a pull request.
-2. Once it is merged, push a tag with that version from the maintainer's account (leclaudeur):
-   `git tag v0.2.0 && git push origin v0.2.0`. A tag pushed by anyone else fails the release job.
-3. The workflow builds the package signed with `SIGNING_KEY`, a secret of the `release` environment that only `v*`
-   tags may use, and publishes it as a GitHub release. The key is written to a temporary file for the build only,
-   then deleted; it never leaves GitHub's secrets.
+```bash
+npm run typecheck
+npm run lint
+npm run format:check
+npm test
+npm run build        # → dist/diagnostic-<version>.hodi-plugin, unsigned
+```
 
-To install it: download the `.hodi-plugin` file from the release, then Réglages › Plugins › Ajouter un plugin.
+## Release a signed version
+
+Diagnostic is one of Hodi's official plugins, so its releases are signed.
+
+1. Raise `version` in `plugin.json` and `package.json`, in a pull request.
+2. Once it is merged, tag that exact version: `git tag v0.2.0 && git push origin v0.2.0`.
+3. CI builds the package with the repository's `SIGNING_KEY` secret and publishes the release.
+
+The key only exists in a temporary file during the build. It never leaves GitHub's secrets.
 
 ## License
 
