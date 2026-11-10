@@ -128,9 +128,102 @@ const toReport = (row: ReportRow): Report => ({
   createdAt: row.created_at
 })
 
+const keepArticle = (db: Database, article: PluginArticle, page: { url: string; html: string } | null, now: number) => {
+  db.run(
+    `INSERT OR REPLACE INTO plugin_diagnostic_articles
+       (article_id, title, url, source_id, source_name, published_at, status, text_length, extracted_html,
+        page_url, page_html, kept_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    [
+      article.id,
+      article.title,
+      article.url,
+      article.sourceId,
+      article.sourceName,
+      article.publishedAt,
+      article.status,
+      article.text?.textLength ?? null,
+      article.text?.contentHtml ?? null,
+      page?.url ?? null,
+      page?.html ?? null,
+      now
+    ]
+  )
+}
+
+const keptArticle = (db: Database, articleId: string) => {
+  // Without the HTML itself, which can weigh hundreds of KB per article.
+  const row = db.get(
+    `SELECT article_id, title, url, source_id, source_name, published_at, status, text_length, page_url, kept_at,
+            extracted_html IS NOT NULL AS has_text, page_html IS NOT NULL AS has_page
+     FROM plugin_diagnostic_articles WHERE article_id = ?`,
+    [articleId]
+  )
+  if (!row) return null
+  return {
+    articleId: String(row.article_id),
+    title: String(row.title),
+    url: String(row.url),
+    sourceId: String(row.source_id),
+    sourceName: String(row.source_name),
+    publishedAt: row.published_at === null ? null : String(row.published_at),
+    status: String(row.status),
+    textLength: row.text_length === null ? null : Number(row.text_length),
+    hasText: Number(row.has_text) === 1,
+    pageUrl: row.page_url === null ? null : String(row.page_url),
+    hasPage: Number(row.has_page) === 1,
+    keptAt: Number(row.kept_at)
+  } satisfies KeptArticle
+}
+
+const reportedArticles = (db: Database, all: Report[]): ReportedArticle[] => {
+  const byArticle = new Map<string, Report[]>()
+  for (const report of all) byArticle.set(report.articleId, [...(byArticle.get(report.articleId) ?? []), report])
+  const rows: ReportedArticle[] = []
+  for (const [articleId, said] of byArticle) {
+    const article = db.get(
+      'SELECT title, source_id, source_name FROM plugin_diagnostic_articles WHERE article_id = ?',
+      [articleId]
+    )
+    // Kept before its first report is written, so always there.
+    if (!article) continue
+    rows.push({
+      articleId,
+      title: String(article.title),
+      sourceId: String(article.source_id),
+      sourceName: String(article.source_name),
+      issues: [...new Set(said.flatMap(report => report.issues))],
+      auto: said.every(report => report.auto),
+      captures: said.filter(report => report.capture).length,
+      at: Math.max(...said.map(report => report.createdAt))
+    })
+  }
+  return rows.sort((a, b) => b.at - a.at)
+}
+
+// The reports a scope sees, as a condition and its values.
+interface Visible {
+  sql: string
+  params: (string | number)[]
+}
+
+const packBytes = (db: Database, visible: Visible) => {
+  const texts = db.get(
+    `SELECT COALESCE(SUM(COALESCE(LENGTH(CAST(extracted_html AS BLOB)), 0) + COALESCE(LENGTH(CAST(page_html AS BLOB)), 0)), 0) AS bytes
+     FROM plugin_diagnostic_articles
+     WHERE article_id IN (SELECT article_id FROM plugin_diagnostic_reports WHERE ${visible.sql})`,
+    visible.params
+  )
+  const captures = db.get(
+    `SELECT COALESCE(SUM(capture_bytes), 0) AS bytes FROM plugin_diagnostic_reports WHERE ${visible.sql}`,
+    visible.params
+  )
+  return Number(texts?.bytes ?? 0) + Number(captures?.bytes ?? 0)
+}
+
 export const createStore = (db: Database, scope: Scope | null) => {
   // The reports the scope sees; none without one (the hook only writes what Hodi spots).
-  const visible = scope
+  const visible: Visible = scope
     ? {
         sql: '(household_id = ? OR (household_id IS NULL AND ? = 1))',
         params: [scope.householdId, scope.serverAdmin ? 1 : 0]
@@ -156,53 +249,10 @@ export const createStore = (db: Database, scope: Scope | null) => {
   return {
     kept,
 
-    keep: (article: PluginArticle, page: { url: string; html: string } | null, now: number) => {
-      db.run(
-        `INSERT OR REPLACE INTO plugin_diagnostic_articles
-           (article_id, title, url, source_id, source_name, published_at, status, text_length, extracted_html,
-            page_url, page_html, kept_at)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-        [
-          article.id,
-          article.title,
-          article.url,
-          article.sourceId,
-          article.sourceName,
-          article.publishedAt,
-          article.status,
-          article.text?.textLength ?? null,
-          article.text?.contentHtml ?? null,
-          page?.url ?? null,
-          page?.html ?? null,
-          now
-        ]
-      )
-    },
+    keep: (article: PluginArticle, page: { url: string; html: string } | null, now: number) =>
+      keepArticle(db, article, page, now),
 
-    article: (articleId: string) => {
-      // Without the HTML itself, which can weigh hundreds of KB per article.
-      const row = db.get(
-        `SELECT article_id, title, url, source_id, source_name, published_at, status, text_length, page_url, kept_at,
-                extracted_html IS NOT NULL AS has_text, page_html IS NOT NULL AS has_page
-         FROM plugin_diagnostic_articles WHERE article_id = ?`,
-        [articleId]
-      )
-      if (!row) return null
-      return {
-        articleId: String(row.article_id),
-        title: String(row.title),
-        url: String(row.url),
-        sourceId: String(row.source_id),
-        sourceName: String(row.source_name),
-        publishedAt: row.published_at === null ? null : String(row.published_at),
-        status: String(row.status),
-        textLength: row.text_length === null ? null : Number(row.text_length),
-        hasText: Number(row.has_text) === 1,
-        pageUrl: row.page_url === null ? null : String(row.page_url),
-        hasPage: Number(row.has_page) === 1,
-        keptAt: Number(row.kept_at)
-      } satisfies KeptArticle
-    },
+    article: (articleId: string) => keptArticle(db, articleId),
 
     add: (report: { articleId: string; auto: boolean; issues: readonly Issue[]; note?: string | null; now: number }) =>
       Number(
@@ -254,46 +304,10 @@ export const createStore = (db: Database, scope: Scope | null) => {
     all: () => reports(''),
 
     // The rows of Réglages › Diagnostic, the last reported first.
-    list: (): ReportedArticle[] => {
-      const byArticle = new Map<string, Report[]>()
-      for (const report of reports(''))
-        byArticle.set(report.articleId, [...(byArticle.get(report.articleId) ?? []), report])
-      const rows: ReportedArticle[] = []
-      for (const [articleId, said] of byArticle) {
-        const article = db.get(
-          'SELECT title, source_id, source_name FROM plugin_diagnostic_articles WHERE article_id = ?',
-          [articleId]
-        )
-        // Kept before its first report is written, so always there.
-        if (!article) continue
-        rows.push({
-          articleId,
-          title: String(article.title),
-          sourceId: String(article.source_id),
-          sourceName: String(article.source_name),
-          issues: [...new Set(said.flatMap(report => report.issues))],
-          auto: said.every(report => report.auto),
-          captures: said.filter(report => report.capture).length,
-          at: Math.max(...said.map(report => report.createdAt))
-        })
-      }
-      return rows.sort((a, b) => b.at - a.at)
-    },
+    list: (): ReportedArticle[] => reportedArticles(db, reports('')),
 
     // What the pack holds, before it is compressed: the pages, the texts and the captures.
-    bytes: () => {
-      const texts = db.get(
-        `SELECT COALESCE(SUM(COALESCE(LENGTH(CAST(extracted_html AS BLOB)), 0) + COALESCE(LENGTH(CAST(page_html AS BLOB)), 0)), 0) AS bytes
-         FROM plugin_diagnostic_articles
-         WHERE article_id IN (SELECT article_id FROM plugin_diagnostic_reports WHERE ${visible.sql})`,
-        visible.params
-      )
-      const captures = db.get(
-        `SELECT COALESCE(SUM(capture_bytes), 0) AS bytes FROM plugin_diagnostic_reports WHERE ${visible.sql}`,
-        visible.params
-      )
-      return Number(texts?.bytes ?? 0) + Number(captures?.bytes ?? 0)
-    },
+    bytes: () => packBytes(db, visible),
 
     // Empties what the scope sees; the other households' reports stay.
     clear: () => {

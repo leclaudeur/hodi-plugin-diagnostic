@@ -15,7 +15,7 @@ import {
   usePluginLinks,
   usePluginTranslation
 } from 'hodi:sdk'
-import { type Summary, reportsChanged, useAsked, useDiagnosticApi } from './api.ts'
+import { type ReportedArticle, type Summary, reportsChanged, useAsked, useDiagnosticApi } from './api.ts'
 import { issuesText, sizeText } from './format.ts'
 
 // Past three rows the others fold under a last one, which never hides a single row (as the teens' requests).
@@ -23,27 +23,11 @@ const FOLDED = 3
 const PACK_HREF = '/api/plugins/diagnostic/pack'
 const lowerFirst = (text: string) => text.charAt(0).toLowerCase() + text.slice(1)
 
-// Réglages › Diagnostic, for the admin: the pack to download, what was reported or spotted, and emptying the list
-// once the pack is sent.
-const DiagnosticPage = ({ layout }: { layout: 'desktop' | 'phone' }) => {
-  const { t, language } = usePluginTranslation()
+// The admin empties the list once the pack is sent, after confirming.
+const useClear = () => {
+  const { t } = usePluginTranslation()
   const ask = useDiagnosticApi()
-  const links = usePluginLinks()
-  const { data, failed } = useAsked<Summary>('/summary')
-  const [unfolded, setUnfolded] = useState(false)
   const [clearing, setClearing] = useState(false)
-
-  const rows = data?.rows ?? []
-  const folded = !unfolded && rows.length > FOLDED + 1
-  const shown = folded ? rows.slice(0, FOLDED) : rows
-
-  // The server answers with the zip as an attachment: the page stays where it is.
-  const download = () => {
-    const link = document.createElement('a')
-    link.href = PACK_HREF
-    link.download = ''
-    link.click()
-  }
 
   const clear = () =>
     askToConfirm({
@@ -63,6 +47,53 @@ const DiagnosticPage = ({ layout }: { layout: 'desktop' | 'phone' }) => {
           .finally(() => setClearing(false))
       }
     })
+
+  return { clearing, clear }
+}
+
+// An article reported or spotted, with its issues, whether it has a screenshot, its source and when.
+const ReportedRow = ({ row }: { row: ReportedArticle }) => {
+  const { t } = usePluginTranslation()
+  const links = usePluginLinks()
+  return (
+    <li>
+      <a className="diagnostic-row" href={links.article(row.articleId)}>
+        <span className="diagnostic-row-title">{row.title}</span>
+        <span className="diagnostic-row-issues">
+          {row.auto ? `${t('page.auto')} · ${lowerFirst(issuesText(row.issues, t))}` : issuesText(row.issues, t)}
+          {row.captures > 0 && (
+            <Image size={14} className="diagnostic-capture-icon" aria-label={t('page.withCapture')} />
+          )}
+        </span>
+        <span className="diagnostic-row-meta">
+          <SourceAvatar sourceId={row.sourceId} sourceName={row.sourceName} size={18} />
+          <span>{row.sourceName}</span>
+          <span className="diagnostic-row-time">· {shortAgo(new Date(row.at).toISOString())}</span>
+        </span>
+      </a>
+    </li>
+  )
+}
+
+// Réglages › Diagnostic, for the admin: the pack to download, what was reported or spotted, and emptying the list
+// once the pack is sent.
+const DiagnosticPage = ({ layout }: { layout: 'desktop' | 'phone' }) => {
+  const { t, language } = usePluginTranslation()
+  const { data, failed } = useAsked<Summary>('/summary')
+  const [unfolded, setUnfolded] = useState(false)
+  const { clearing, clear } = useClear()
+
+  const rows = data?.rows ?? []
+  const folded = !unfolded && rows.length > FOLDED + 1
+  const shown = folded ? rows.slice(0, FOLDED) : rows
+
+  // The server answers with the zip as an attachment: the page stays where it is.
+  const download = () => {
+    const link = document.createElement('a')
+    link.href = PACK_HREF
+    link.download = ''
+    link.click()
+  }
 
   return (
     <SectionPage title={t('page.title')} intro={t('page.intro')} layout={layout}>
@@ -93,24 +124,7 @@ const DiagnosticPage = ({ layout }: { layout: 'desktop' | 'phone' }) => {
         ) : (
           <ul className="diagnostic-list">
             {shown.map(row => (
-              <li key={row.articleId}>
-                <a className="diagnostic-row" href={links.article(row.articleId)}>
-                  <span className="diagnostic-row-title">{row.title}</span>
-                  <span className="diagnostic-row-issues">
-                    {row.auto
-                      ? `${t('page.auto')} · ${lowerFirst(issuesText(row.issues, t))}`
-                      : issuesText(row.issues, t)}
-                    {row.captures > 0 && (
-                      <Image size={14} className="diagnostic-capture-icon" aria-label={t('page.withCapture')} />
-                    )}
-                  </span>
-                  <span className="diagnostic-row-meta">
-                    <SourceAvatar sourceId={row.sourceId} sourceName={row.sourceName} size={18} />
-                    <span>{row.sourceName}</span>
-                    <span className="diagnostic-row-time">· {shortAgo(new Date(row.at).toISOString())}</span>
-                  </span>
-                </a>
-              </li>
+              <ReportedRow key={row.articleId} row={row} />
             ))}
             {folded && (
               <li>
