@@ -19,8 +19,7 @@ Sometimes Hodi's reader cuts a text, keeps a share bar or loses the images. Diag
 went wrong:
 
 - 🚩 **Report**: a button at the end of each article. Tick what is wrong, add a note and a screenshot if you like.
-- 👀 **Spotted by Hodi**: the plugin also notes, on its own, a blocked site, a text too short to be whole, or page
-  leftovers such as "Read more". It keeps 300 articles at most.
+- 👀 **Spotted by Hodi**: blocked sites, cut texts and page leftovers, noted on its own.
 - 📦 **The pack**: _Settings › Diagnostic_ lists every report and downloads them all as one zip file.
 
 It is for the household's **admin only**: other profiles never see it. It makes **no AI call**.
@@ -34,13 +33,14 @@ You need a Hodi with plugin API 2, where you are the server's admin.
 2. In Hodi, open _Server › Plugins_ and click **Add a plugin**. Choose the file.
 3. Hodi restarts with it. **Diagnostic** shows in _Settings_, in the _Household_ group, after _AI & credits_.
 
-Releases are signed, so Hodi installs them as _Verified_. Coming from 0.1.0? Its screenshots aren't carried over:
-download the pack first if you need them.
+Releases are signed, so Hodi installs them as _Verified_.
+
+> [!WARNING]
+> Coming from 0.1.0? Its screenshots aren't carried over. Download the pack first if you need them.
 
 ## The pack
 
-Send `hodi-diagnostic-<date>.zip` to whoever fixes Hodi's reader (`server/news/extract.ts`) or its sources
-(`sources.yml`). It holds one folder per article:
+**Download** in _Settings › Diagnostic_ gives you one zip file, with a folder per article:
 
 ```text
 report.json      the article and every report on it: issues, note, who, when
@@ -49,10 +49,11 @@ extracted.html   the text Hodi's reader took from it
 capture-<n>.png  the screenshots
 ```
 
-Once the fixes are in, click **Empty** in _Settings › Diagnostic_.
+Send it to whoever fixes Hodi's reader or its sources. Once the fixes are in, click **Empty**.
 
-On a server with several households, each admin sees only their household's reports. What Hodi spots on its own is
-about the reader, not a household, so only the server's admin sees it.
+> [!NOTE]
+> On a server with several households, each admin sees only their own reports. What Hodi spots on its own is about
+> the reader, so only the server's admin sees it.
 
 ## Develop
 
@@ -94,7 +95,8 @@ Diagnostic is one of Hodi's official plugins, so its releases are signed.
 2. Once it is merged, tag that exact version: `git tag v0.2.0 && git push origin v0.2.0`.
 3. CI builds the package with the repository's `SIGNING_KEY` secret and publishes the release.
 
-The key only exists in a temporary file during the build. It never leaves GitHub's secrets.
+> [!IMPORTANT]
+> The key only exists in a temporary file during the build. It never leaves GitHub's secrets.
 
 ## License
 
