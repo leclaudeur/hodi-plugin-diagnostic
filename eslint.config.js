@@ -24,12 +24,12 @@ export default tseslint.config(
     }
   },
   {
-    // Sizes: warnings until the big files are split, then errors.
+    // Sizes, as in Hodi's own code: a file, a function or a component past them is split.
     files: ['server/**/*.ts', 'web/**/*.{ts,tsx}'],
     rules: {
-      'max-lines': ['warn', { max: 300, skipBlankLines: true, skipComments: true }],
-      'max-lines-per-function': ['warn', { max: 80, skipBlankLines: true, skipComments: true }],
-      'sonarjs/cognitive-complexity': ['warn', 15]
+      'max-lines': ['error', { max: 300, skipBlankLines: true, skipComments: true }],
+      'max-lines-per-function': ['error', { max: 80, skipBlankLines: true, skipComments: true }],
+      'sonarjs/cognitive-complexity': ['error', 15]
     }
   },
   {

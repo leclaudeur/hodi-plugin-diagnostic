@@ -13,6 +13,39 @@ const isImage = async (file: File) => {
   return png || jpg
 }
 
+// The image read for a file: a preview of an earlier file is never shown for the next one.
+const usePreview = (file: File) => {
+  const [read, setRead] = useState<{ file: File; url: string } | null>(null)
+
+  // Read as a data: address: Hodi's content policy shows no blob: image.
+  useEffect(() => {
+    const reader = new FileReader()
+    reader.onload = () => setRead(typeof reader.result === 'string' ? { file, url: reader.result } : null)
+    reader.readAsDataURL(file)
+    return () => reader.abort()
+  }, [file])
+
+  return read && read.file === file ? read.url : null
+}
+
+// The screenshot taken: the image, its name and size, and the way to take it out.
+const ChosenCapture = ({ file, disabled, onRemove }: { file: File; disabled: boolean; onRemove: () => void }) => {
+  const { t, language } = usePluginTranslation()
+  const preview = usePreview(file)
+  return (
+    <div className="diagnostic-capture-row diagnostic-capture-chosen">
+      <span className="diagnostic-capture-tile">{preview && <img src={preview} alt="" />}</span>
+      <span className="diagnostic-capture-text">
+        <span className="diagnostic-capture-label">{t('capture.chosen')}</span>
+        <span className="diagnostic-capture-hint">
+          {file.name} · {sizeText(file.size, language, t)}
+        </span>
+      </span>
+      <RoundButton icon={X} label={t('capture.remove')} size={34} disabled={disabled} onClick={onRemove} />
+    </div>
+  )
+}
+
 interface CaptureFieldProps {
   file: File | null
   onChange: (file: File | null) => void
@@ -23,23 +56,11 @@ interface CaptureFieldProps {
 // same states: lit while a file is over it, "Lecture…" while it is read, a red line when it cannot be taken. Taken,
 // it shows the image, its name and size, and the way to take it out.
 const CaptureField = ({ file, onChange, disabled = false }: CaptureFieldProps) => {
-  const { t, language } = usePluginTranslation()
+  const { t } = usePluginTranslation()
   const input = useRef<HTMLInputElement>(null)
   const [over, setOver] = useState(false)
   const [reading, setReading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  // The image read for a file: a preview of an earlier file is never shown for the next one.
-  const [read, setRead] = useState<{ file: File; url: string } | null>(null)
-  const preview = read && read.file === file ? read.url : null
-
-  // Read as a data: address: Hodi's content policy shows no blob: image.
-  useEffect(() => {
-    if (!file) return
-    const reader = new FileReader()
-    reader.onload = () => setRead(typeof reader.result === 'string' ? { file, url: reader.result } : null)
-    reader.readAsDataURL(file)
-    return () => reader.abort()
-  }, [file])
 
   const choose = async (chosen: File | undefined) => {
     if (!chosen) return
@@ -76,22 +97,7 @@ const CaptureField = ({ file, onChange, disabled = false }: CaptureFieldProps) =
         onChange={event => void choose(event.target.files?.[0])}
       />
       {file ? (
-        <div className="diagnostic-capture-row diagnostic-capture-chosen">
-          <span className="diagnostic-capture-tile">{preview && <img src={preview} alt="" />}</span>
-          <span className="diagnostic-capture-text">
-            <span className="diagnostic-capture-label">{t('capture.chosen')}</span>
-            <span className="diagnostic-capture-hint">
-              {file.name} · {sizeText(file.size, language, t)}
-            </span>
-          </span>
-          <RoundButton
-            icon={X}
-            label={t('capture.remove')}
-            size={34}
-            disabled={disabled}
-            onClick={() => onChange(null)}
-          />
-        </div>
+        <ChosenCapture file={file} disabled={disabled} onRemove={() => onChange(null)} />
       ) : (
         <button
           type="button"

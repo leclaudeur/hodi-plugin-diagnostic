@@ -19,6 +19,68 @@ import CaptureField from './CaptureField.tsx'
 const PICKED = ['cut', 'extra', 'images', 'layout', 'wrong', 'other'] as const
 const NOTE_MAX = 500
 
+interface Draft {
+  articleId: string
+  issues: string[]
+  note: string
+  capture: File | null
+}
+
+// The report, then its screenshot: a screenshot that fails keeps the report, and only says so.
+const sendReport = async (ask: ReturnType<typeof useDiagnosticApi>, draft: Draft, onCaptureFailed: () => void) => {
+  const { id } = await ask<{ id: number }>('/reports', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      articleId: draft.articleId,
+      // In the order of the chips, whatever the order they were ticked in.
+      issues: PICKED.filter(issue => draft.issues.includes(issue)),
+      ...(draft.note.trim() ? { note: draft.note.trim() } : {})
+    })
+  })
+  if (!draft.capture) return
+  try {
+    await ask(`/reports/${id}/capture`, {
+      method: 'PUT',
+      headers: { 'Content-Type': draft.capture.type },
+      body: draft.capture
+    })
+  } catch {
+    onCaptureFailed()
+  }
+}
+
+// What is kept with a report, in bold.
+const ReportIntro = () => {
+  const { t } = usePluginTranslation()
+  return (
+    <>
+      {t('dialog.introStart')}
+      <b>{t('dialog.introKept')}</b>
+      {t('dialog.introEnd')}
+    </>
+  )
+}
+
+interface ChipsProps {
+  issues: string[]
+  disabled: boolean
+  onToggle: (issue: string) => void
+}
+
+const IssueChips = ({ issues, disabled, onToggle }: ChipsProps) => {
+  const { t } = usePluginTranslation()
+  return (
+    <div className="diagnostic-chips" role="group" aria-label={t('dialog.issues')}>
+      {PICKED.map(issue => (
+        <FilterChip key={issue} selected={issues.includes(issue)} disabled={disabled} onClick={() => onToggle(issue)}>
+          {t(`issues.${issue}`)}
+        </FilterChip>
+      ))}
+    </div>
+  )
+}
+
 interface ReportDialogProps {
   article: ReaderArticle
   open: boolean
@@ -62,28 +124,9 @@ const ReportDialog = ({ article, open, onClose, onSent }: ReportDialogProps) => 
     setBusy(true)
     setError(null)
     try {
-      const { id } = await ask<{ id: number }>('/reports', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          articleId: article.id,
-          // In the order of the chips, whatever the order they were ticked in.
-          issues: PICKED.filter(issue => issues.includes(issue)),
-          ...(note.trim() ? { note: note.trim() } : {})
-        })
-      })
-      if (capture) {
-        try {
-          await ask(`/reports/${id}/capture`, {
-            method: 'PUT',
-            headers: { 'Content-Type': capture.type },
-            body: capture
-          })
-        } catch {
-          // The report is kept: only its screenshot is missing.
-          showError(t('dialog.captureFailed'))
-        }
-      }
+      await sendReport(ask, { articleId: article.id, issues, note, capture }, () =>
+        showError(t('dialog.captureFailed'))
+      )
       reportsChanged()
       showDone(t('dialog.done'))
       reset()
@@ -96,27 +139,10 @@ const ReportDialog = ({ article, open, onClose, onSent }: ReportDialogProps) => 
   }
 
   return (
-    <Dialog
-      open={open}
-      onClose={close}
-      title={t('dialog.title')}
-      intro={
-        <>
-          {t('dialog.introStart')}
-          <b>{t('dialog.introKept')}</b>
-          {t('dialog.introEnd')}
-        </>
-      }
-    >
+    <Dialog open={open} onClose={close} title={t('dialog.title')} intro={<ReportIntro />}>
       {/* One block: the dialog's body scrolls it whole on a short screen, and squeezes none of its fields. */}
       <div className="diagnostic-form">
-        <div className="diagnostic-chips" role="group" aria-label={t('dialog.issues')}>
-          {PICKED.map(issue => (
-            <FilterChip key={issue} selected={issues.includes(issue)} disabled={busy} onClick={() => toggle(issue)}>
-              {t(`issues.${issue}`)}
-            </FilterChip>
-          ))}
-        </div>
+        <IssueChips issues={issues} disabled={busy} onToggle={toggle} />
         {/* One field: a precision, or what "Autre" is once it is ticked. */}
         <TextField
           icon={MessageSquare}
