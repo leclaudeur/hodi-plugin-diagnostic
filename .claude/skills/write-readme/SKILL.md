@@ -32,8 +32,24 @@ Learned from the maintainer's reviews. These win over the general advice above.
 - **English everywhere, interface labels included.** Hodi is translated: name screens and buttons by their English
   label (`shared/locales/en.json` in hodi-next), such as _Server › Plugins_ and **Developer mode**, never the French
   one.
-- **Balanced paragraphs.** Avoid a lone word on the last line of a paragraph: reword or lengthen it slightly.
-- **One line per feature.** Each item of a feature list fits on one line: name it, then say it in a few words.
+- **Screens in italics, buttons in bold.** A screen or its path is always in italics (_Settings › Sources_), with
+  `›` between levels; a button or a link is in bold (**Add a source**).
+- **Real paragraphs.** Short sentences, but not one paragraph per sentence: group the sentences about the same thing
+  into one paragraph of two or three sentences.
+- **Balanced paragraphs.** On GitHub's page width (about 140 characters a line), a paragraph's last line is never just
+  a few words: reword, merge or lengthen it until the last line is at least a third full.
+- **No tables.** GitHub sizes a table to its content, and its width can't be controlled. Use a short list instead,
+  one item per line, or a section per entry with a sentence or two.
+- **One line per list item.** Every item of a list fits on one line at GitHub's width: a bold lead, then a few words.
+  Leave the details to the doc that covers them. A code block in a numbered step gets a blank line before and after.
+- **Two sentences on two lines.** When two sentences of one paragraph read better on two lines, end the first with a
+  backslash (`\`): a line break, not a new paragraph.
+- **A public README invites.** A README read on GitHub or npm opens like a repository's: a centered header, one pitch,
+  badges, a menu and a short feature list. Its details live in the types or the deeper docs, never in a long reference.
+- **Diagrams in Mermaid.** A drawing of how parts connect is a `mermaid` code block, which GitHub draws, never ASCII
+  art.
+- **No pull request numbers.** Readers can't open the private repositories' pull requests: say what changed, never
+  which pull request changed it.
 - **Callouts for warnings and side notes.** Use GitHub's alerts, as Hodi's README does: `> [!NOTE]` for context,
   `> [!TIP]` for a helpful extra, `> [!IMPORTANT]` for what must not be missed, `> [!WARNING]` for a risk.
 - **Plain sentences first.** Don't crowd a sentence with inline code or file paths: say it in words, and keep paths
