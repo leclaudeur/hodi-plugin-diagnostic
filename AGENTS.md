@@ -15,6 +15,8 @@ installed).
   Code, comments, identifiers and commits are in English.
 - Use Hodi's components from `hodi:sdk` and its CSS variables; prefix class names with the plugin's id.
 - Migrations are appended, never edited or reordered once released. Tables are named `plugin_<id>_…`.
+- Add a line under « Unreleased » in `CHANGELOG.md` for anything a user would notice. Never raise `version` in a
+  feature pull request: a small release pull request does it, right before the tag.
 - Before a pull request: `npm run typecheck`, `npm run lint`, `npm test`, `npm run format:check` and `npm run build` must pass.
 - Releases are signed by CI with the `SIGNING_KEY` secret (README, "Releasing a signed version"): never sign locally.
 - Never put a private key in the repository.
