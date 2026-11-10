@@ -1,19 +1,9 @@
 import { Flag, Image, Trash2 } from 'lucide-react'
-import {
-  Button,
-  Dialog,
-  DialogActions,
-  type ReaderArticle,
-  RoundButton,
-  askToConfirm,
-  showError,
-  usePluginTranslation
-} from 'hodi:sdk'
+import { Button, Dialog, DialogActions, RoundButton, askToConfirm, showError, usePluginTranslation } from 'hodi:sdk'
 import { type Report, reportsChanged, useDiagnosticApi } from './api.ts'
 import { issuesText } from './format.ts'
 
 interface ReportsDialogProps {
-  article: ReaderArticle
   open: boolean
   reports: Report[]
   onClose: () => void
@@ -23,7 +13,7 @@ interface ReportsDialogProps {
 
 // An article reported already: what was said about it, on its own card, each report can be taken back. The form to
 // report something else comes over it, so the list never has to share the dialog with the form.
-const ReportsDialog = ({ article, open, reports, onClose, onAdd }: ReportsDialogProps) => {
+const ReportsDialog = ({ open, reports, onClose, onAdd }: ReportsDialogProps) => {
   const { t } = usePluginTranslation()
   const ask = useDiagnosticApi()
 

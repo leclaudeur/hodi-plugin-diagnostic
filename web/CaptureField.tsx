@@ -28,14 +28,15 @@ const CaptureField = ({ file, onChange, disabled = false }: CaptureFieldProps) =
   const [over, setOver] = useState(false)
   const [reading, setReading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [preview, setPreview] = useState<string | null>(null)
+  // The image read for a file: a preview of an earlier file is never shown for the next one.
+  const [read, setRead] = useState<{ file: File; url: string } | null>(null)
+  const preview = read && read.file === file ? read.url : null
 
   // Read as a data: address: Hodi's content policy shows no blob: image.
   useEffect(() => {
-    setPreview(null)
     if (!file) return
     const reader = new FileReader()
-    reader.onload = () => setPreview(typeof reader.result === 'string' ? reader.result : null)
+    reader.onload = () => setRead(typeof reader.result === 'string' ? { file, url: reader.result } : null)
     reader.readAsDataURL(file)
     return () => reader.abort()
   }, [file])
