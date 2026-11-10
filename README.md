@@ -68,10 +68,11 @@ GitHub Actions runs them on every push and pull request, and attaches the unsign
 Diagnostic is one of Hodi's official plugins: its releases are signed, so Hodi installs them as "Vérifié".
 
 1. Raise `version` in `plugin.json` and `package.json` in a pull request.
-2. Once it is merged, push a tag with that version: `git tag v0.2.0 && git push origin v0.2.0`.
-3. The workflow builds the package signed with the `SIGNING_KEY` secret of the repository, and publishes it as a
-   GitHub release. The key is written to a temporary file for the build only, then deleted; it never leaves GitHub's
-   secrets.
+2. Once it is merged, push a tag with that version from the maintainer's account (leclaudeur):
+   `git tag v0.2.0 && git push origin v0.2.0`. A tag pushed by anyone else fails the release job.
+3. The workflow builds the package signed with `SIGNING_KEY`, a secret of the `release` environment that only `v*`
+   tags may use, and publishes it as a GitHub release. The key is written to a temporary file for the build only,
+   then deleted; it never leaves GitHub's secrets.
 
 To install it: download the `.hodi-plugin` file from the release, then Réglages › Plugins › Ajouter un plugin.
 

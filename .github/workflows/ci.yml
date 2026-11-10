@@ -29,20 +29,30 @@ jobs:
           name: hodi-plugin-unsigned
           path: dist/*.hodi-plugin
 
-  # A tag such as v0.2.0 publishes a package signed with the repository's SIGNING_KEY secret, as a GitHub release.
+  # A tag such as v0.2.0 publishes a package signed with SIGNING_KEY, as a GitHub release. The key lives in the
+  # release environment, which only v* tags may use, and only a tag the maintainer pushed is signed: write access alone
+  # (a token, an app) must not be enough to make a plugin « Vérifié ».
   release:
     if: startsWith(github.ref, 'refs/tags/v')
     needs: check
     runs-on: ubuntu-latest
+    environment: release
     permissions:
       contents: write
     steps:
+      - name: Tag pushed by the maintainer
+        run: |
+          if [ "$GITHUB_ACTOR" != "leclaudeur" ] || [ "$GITHUB_TRIGGERING_ACTOR" != "leclaudeur" ]; then
+            echo "Only leclaudeur's tags are signed (pushed by $GITHUB_ACTOR, run by $GITHUB_TRIGGERING_ACTOR)" >&2
+            exit 1
+          fi
       - uses: actions/checkout@v7
       - uses: actions/setup-node@v7
         with:
           node-version: 24
           cache: npm
-      - run: npm ci
+      # No package's install script runs in the job that holds the signing key.
+      - run: npm ci --ignore-scripts
       # The tag must be the version the package says it is.
       - run: test "v$(node -p "require('./plugin.json').version")" = "$GITHUB_REF_NAME"
       - name: Build, signed
