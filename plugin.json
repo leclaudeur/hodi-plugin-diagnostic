@@ -1,7 +1,7 @@
 {
   "id": "diagnostic",
   "name": "Diagnostic",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "description": "Signale ce que le lecteur rate sur un article, et prépare un pack pour le corriger.",
   "api": 2,
   "audience": "admin",
