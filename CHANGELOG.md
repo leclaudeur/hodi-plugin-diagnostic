@@ -8,6 +8,10 @@ release pull request raises `version` and moves the lines under it, then the tag
 
 ## [Unreleased]
 
+### Changed
+
+- The « Signalés » list shows grey placeholder rows while it loads, instead of staying empty.
+
 ## [0.2.1] - 2026-11-10
 
 Maintenance only: nothing changes for a household.

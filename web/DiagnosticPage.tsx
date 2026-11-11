@@ -17,6 +17,7 @@ import {
 } from 'hodi:sdk'
 import { type ReportedArticle, type Summary, reportsChanged, useAsked, useDiagnosticApi } from './api.ts'
 import { issuesText, sizeText } from './format.ts'
+import ReportedSkeleton from './ReportedSkeleton.tsx'
 
 // Past three rows the others fold under a last one, which never hides a single row (as the teens' requests).
 const FOLDED = 3
@@ -117,7 +118,9 @@ const DiagnosticPage = ({ layout }: { layout: 'desktop' | 'phone' }) => {
       </SettingsCard>
 
       <SettingsCard label={t('page.reported')}>
-        {data && rows.length === 0 ? (
+        {!data && !failed ? (
+          <ReportedSkeleton />
+        ) : data && rows.length === 0 ? (
           <EmptyState icon={<Flag size={20} />} title={t('page.emptyTitle')} compact>
             {t('page.emptyText')}
           </EmptyState>

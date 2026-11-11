@@ -249,3 +249,19 @@
   text-align: left;
   cursor: pointer;
 }
+
+/* Hodi's skeleton (ui/Skeleton): grey shapes where content is coming, without a shimmer. */
+.diagnostic-skeleton-bar {
+  display: block;
+  flex-shrink: 0;
+  border-radius: 5px;
+  background: linear-gradient(90deg, var(--control) 0%, var(--divider) 50%, var(--control) 100%);
+  background-size: 200% 100%;
+}
+
+/* A text line's own height, so a placeholder row is as tall as a real one. */
+.diagnostic-skeleton-line {
+  display: flex;
+  align-items: center;
+  height: 1lh;
+}
