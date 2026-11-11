@@ -1,5 +1,6 @@
 {
   "manifest": {
+    "name": "Diagnostic",
     "description": "Reports what the reader misses on an article, and builds a pack to fix it."
   },
   "settings": {

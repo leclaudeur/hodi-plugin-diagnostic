@@ -10,7 +10,8 @@ release pull request raises `version` and moves the lines under it, then the tag
 
 ### Added
 
-- Its description in English, for Hodi's interface in English (needs Hodi with translated plugin names).
+- Its name and description in each language, for Hodi's interface in English (needs Hodi with translated plugin
+  names).
 
 ### Changed
 
