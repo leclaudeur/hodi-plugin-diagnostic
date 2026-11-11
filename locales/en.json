@@ -1,4 +1,8 @@
 {
+  "manifest": {
+    "name": "Diagnostic",
+    "description": "Reports what the reader misses on an article, and builds a pack to fix it."
+  },
   "settings": {
     "autoSignals": "Spot on its own",
     "autoSignalsHint": "Hodi notes articles blocked, too short or with page leftovers"

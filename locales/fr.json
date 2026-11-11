@@ -1,4 +1,8 @@
 {
+  "manifest": {
+    "name": "Diagnostic",
+    "description": "Signale ce que le lecteur rate sur un article, et prépare un pack pour le corriger."
+  },
   "settings": {
     "autoSignals": "Repérer seul",
     "autoSignalsHint": "Hodi note les articles bloqués, trop courts ou avec des restes de la page"
