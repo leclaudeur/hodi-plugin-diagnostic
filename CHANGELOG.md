@@ -8,6 +8,10 @@ release pull request raises `version` and moves the lines under it, then the tag
 
 ## [Unreleased]
 
+### Added
+
+- Its description in English, for Hodi's interface in English (needs Hodi with translated plugin names).
+
 ### Changed
 
 - The « Signalés » list shows grey placeholder rows while it loads, instead of staying empty.
