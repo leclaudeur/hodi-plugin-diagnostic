@@ -66,6 +66,12 @@ describe('Diagnostic, moved from plugin API 1', () => {
   })
 })
 
+// What Hodi gives a plugin and Diagnostic never uses: a call fails the test.
+const unused = (): never => {
+  throw new Error('not used by Diagnostic')
+}
+const notUsed = <T extends object>(): T => new Proxy({}, { get: () => unused }) as T
+
 describe('Diagnostic', () => {
   let autoSignals = true
   const pages: string[] = []
@@ -77,6 +83,11 @@ describe('Diagnostic', () => {
       throw new Error('no network in tests')
     },
     log: () => {},
+    http: unused,
+    serverSettings: unused,
+    mail: notUsed(),
+    households: notUsed(),
+    accounts: notUsed(),
     articles: {
       get: async id => (id.startsWith('a') ? article(id) : null),
       page: async id => {
@@ -88,6 +99,7 @@ describe('Diagnostic', () => {
 
   // Calls a route as Hodi does once it matched it: method and path, the named parts, the JSON body or the bytes.
   const ADMIN: PluginRequest['who'] = {
+    accountId: 1,
     profileId: 1,
     householdId: 1,
     kind: 'adult',
@@ -173,7 +185,7 @@ describe('Diagnostic', () => {
     const { body } = await post({ articleId: 'a2', issues: ['images'] })
     const id = String(body?.id)
     const route = plugin.routes?.['PUT /reports/:id/capture']
-    assert.ok(route && typeof route !== 'function' && route.raw && route.maxBody === 5 * 1024 * 1024)
+    assert.ok(route && typeof route !== 'function' && 'raw' in route && route.maxBody === 5 * 1024 * 1024)
     assert.equal((await call('PUT /reports/:id/capture', { id }, new TextEncoder().encode('GIF89a'))).status, 415)
     assert.equal((await call('PUT /reports/:id/capture', { id: '999' }, PNG)).status, 404)
     assert.equal((await call('PUT /reports/:id/capture', { id }, PNG)).status, 204)
@@ -235,7 +247,7 @@ describe('Diagnostic', () => {
     const theirs = String((body?.reports as { id: number }[])[0]?.id)
 
     // The admin of another household, who does not run the server.
-    who = { profileId: 7, householdId: 2, kind: 'adult', householdAdmin: true, serverAdmin: false }
+    who = { accountId: 7, profileId: 7, householdId: 2, kind: 'adult', householdAdmin: true, serverAdmin: false }
     try {
       assert.deepEqual(await summary(), { articles: 0, bytes: 0, rows: [] })
       assert.deepEqual((await call('GET /articles/:id/reports', { id: 'a1' })).body, { reports: [] })
