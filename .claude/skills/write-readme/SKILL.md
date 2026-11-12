@@ -48,6 +48,8 @@ Learned from the maintainer's reviews. These win over the general advice above.
   badges, a menu and a short feature list. Its details live in the types or the deeper docs, never in a long reference.
 - **Diagrams in Mermaid.** A drawing of how parts connect is a `mermaid` code block, which GitHub draws, never ASCII
   art.
+- **Objects unrolled.** In a code block, an object or array with more than one entry puts one entry per line, as
+  `JSON.stringify(value, null, 2)` writes it: never `{ "name": "…", "lang": "fr" }` on one line.
 - **No pull request numbers.** Readers can't open the private repositories' pull requests: say what changed, never
   which pull request changed it.
 - **Callouts for warnings and side notes.** Use GitHub's alerts, as Hodi's README does: `> [!NOTE]` for context,
