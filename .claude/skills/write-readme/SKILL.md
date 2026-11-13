@@ -30,7 +30,7 @@ Learned from the maintainer's reviews. These win over the general advice above.
 - **Emojis sparingly.** One in the title, and at most one set in a feature list (such as "Why start here"). None in
   other headings, rules or steps.
 - **English everywhere, interface labels included.** Hodi is translated: name screens and buttons by their English
-  label (`shared/locales/en.json` in hodi-next), such as _Server › Plugins_ and **Developer mode**, never the French
+  label (`shared/locales/en.json` in hodi), such as _Server › Plugins_ and **Developer mode**, never the French
   one.
 - **Screens in italics, buttons in bold.** A screen or its path is always in italics (_Settings › Sources_), with
   `›` between levels; a button or a link is in bold (**Add a source**).
