@@ -8,6 +8,10 @@ release pull request raises `version` and moves the lines under it, then the tag
 
 ## [Unreleased]
 
+## [1.0.0-beta.1] - 2026-11-14
+
+The first beta, released with Hodi 1.0.0-beta.1: the same as 0.2.2 for a household.
+
 ## [0.2.2] - 2026-11-11
 
 ### Added
@@ -46,7 +50,8 @@ Maintenance only: nothing changes for a household.
 - **Spotted by Hodi**: blocked sites, cut texts and page leftovers, noted on their own.
 - **The pack**: Settings › Diagnostic lists every report and downloads them all as one zip file.
 
-[unreleased]: https://github.com/leclaudeur/hodi-plugin-diagnostic/compare/v0.2.2...HEAD
+[unreleased]: https://github.com/leclaudeur/hodi-plugin-diagnostic/compare/v1.0.0-beta.1...HEAD
+[1.0.0-beta.1]: https://github.com/leclaudeur/hodi-plugin-diagnostic/releases/tag/v1.0.0-beta.1
 [0.2.2]: https://github.com/leclaudeur/hodi-plugin-diagnostic/releases/tag/v0.2.2
 [0.2.1]: https://github.com/leclaudeur/hodi-plugin-diagnostic/releases/tag/v0.2.1
 [0.2.0]: https://github.com/leclaudeur/hodi-plugin-diagnostic/releases/tag/v0.2.0

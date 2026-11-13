@@ -1,6 +1,6 @@
 {
   "name": "hodi-plugin-diagnostic",
-  "version": "0.2.2",
+  "version": "1.0.0-beta.1",
   "private": true,
   "license": "MIT",
   "type": "module",
