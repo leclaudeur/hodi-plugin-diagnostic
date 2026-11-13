@@ -8,8 +8,9 @@ It gathers everything needed to fix it into one pack, ready to send.
 [![CI](https://github.com/leclaudeur/hodi-plugin-diagnostic/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/leclaudeur/hodi-plugin-diagnostic/actions/workflows/ci.yml)
 [![Latest release](https://img.shields.io/github/v/release/leclaudeur/hodi-plugin-diagnostic?sort=semver)](https://github.com/leclaudeur/hodi-plugin-diagnostic/releases)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
+[![Patreon](https://img.shields.io/badge/Patreon-Le%20Claudeur-F96854?logo=patreon&logoColor=white)](https://www.patreon.com/cw/LeClaudeur)
 
-[**Install**](#install) · [**The pack**](#the-pack) · [**Develop**](#develop) · [**Release**](#release-a-signed-version)
+[**Install**](#install) · [**The pack**](#the-pack) · [**Develop**](#develop) · [**Release**](#release-a-signed-version) · [**Sponsor**](#sponsor)
 
 </div>
 
@@ -98,6 +99,13 @@ Diagnostic is one of Hodi's official plugins, so its releases are signed.
 
 > [!IMPORTANT]
 > The key only exists in a temporary file during the build. It never leaves GitHub's secrets.
+
+## Sponsor
+
+Hodi is free and open source, with no ads and nothing to pay.\
+If it is useful to you, you can support its work on Patreon.
+
+[![Support Hodi on Patreon](https://img.shields.io/badge/Support%20Hodi-Patreon-F96854?style=for-the-badge&logo=patreon&logoColor=white)](https://www.patreon.com/cw/LeClaudeur)
 
 ## License
 
