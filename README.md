@@ -66,13 +66,12 @@ attach the article's folder from the pack. Look at its screenshots first: they s
 
 **With code**, in a clone of [Hodi](https://github.com/leclaudeur/hodi):
 
-1. Open the article's `page.html` beside its `extracted.html`: what is missing or extra shows what to fix.
+1. Compare the article's `page.html` and `extracted.html` to see what is missing or extra.
 2. Fix the cause:
    - a text cut short, or a leftover such as a share bar: `server/news/extract.ts`;
-   - a site that blocks the reader or keeps its text for subscribers: its entry in `sources.yml`, with `reader: false`.
-3. Add a test in `server/test/` with a short page cut from `page.html`, only the parts the fix is about.
-   `extract-arc.test.ts` is one.
-4. Open one pull request per problem, and name the issue it fixes from `report.json`.
+   - a site that blocks the reader or is for subscribers only: `reader: false` in `sources.yml`.
+3. Add a test in `server/test/` with a short cut of `page.html`, like `extract-arc.test.ts`.
+4. Open one pull request per problem, naming the issue from `report.json`.
 
 ## Develop
 
