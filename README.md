@@ -10,7 +10,7 @@ It gathers everything needed to fix it into one pack, ready to send.
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
 [![Patreon](https://img.shields.io/badge/Patreon-Le%20Claudeur-F96854?logo=patreon&logoColor=white)](https://www.patreon.com/cw/LeClaudeur)
 
-[**Install**](#install) · [**The pack**](#the-pack) · [**Develop**](#develop) · [**Release**](#release-a-signed-version) · [**Sponsor**](#sponsor)
+[**Install**](#install) · [**The pack**](#the-pack) · [**Fix the reader**](#help-fix-the-reader) · [**Develop**](#develop) · [**Release**](#release-a-signed-version) · [**Sponsor**](#sponsor)
 
 </div>
 
@@ -50,11 +50,29 @@ extracted.html   the text Hodi's reader took from it
 capture-<n>.png  the screenshots
 ```
 
-Send it to whoever fixes Hodi's reader or its sources. Once the fixes are in, click **Empty**.
+Send it to whoever fixes Hodi's reader or its sources, or [fix it yourself](#help-fix-the-reader). Once the fixes
+are in, click **Empty**.
 
 > [!NOTE]
 > On a server with several households, each admin sees only their own reports. What Hodi spots on its own is about
 > the reader, so only the server's admin sees it.
+
+## Help fix the reader
+
+A pack holds all it takes to fix what the reader gets wrong, with or without code.
+
+**Without code**: open a _Reader problem_ issue on [Hodi](https://github.com/leclaudeur/hodi/issues/new/choose) and
+attach the article's folder from the pack. Look at its screenshots first: they show your screen.
+
+**With code**, in a clone of [Hodi](https://github.com/leclaudeur/hodi):
+
+1. Open the article's `page.html` beside its `extracted.html`: what is missing or extra shows what to fix.
+2. Fix the cause:
+   - a text cut short, or a leftover such as a share bar: `server/news/extract.ts`;
+   - a site that blocks the reader or keeps its text for subscribers: its entry in `sources.yml`, with `reader: false`.
+3. Add a test in `server/test/` with a short page cut from `page.html`, only the parts the fix is about.
+   `extract-arc.test.ts` is one.
+4. Open one pull request per problem, and name the issue it fixes from `report.json`.
 
 ## Develop
 
@@ -92,8 +110,7 @@ npm run build        # → dist/diagnostic-<version>.hodi-plugin, unsigned
 
 Diagnostic is one of Hodi's official plugins, so its releases are signed.
 
-1. Raise `version` in `plugin.json` and `package.json`, and move the lines under « Unreleased » in
-   [CHANGELOG.md](CHANGELOG.md) under that version, in a pull request.
+1. In a pull request, raise `version` in `plugin.json`, `package.json` and [CHANGELOG.md](CHANGELOG.md).
 2. Once it is merged, tag that exact version: `git tag v0.2.0 && git push origin v0.2.0`.
 3. CI builds the package with the repository's `SIGNING_KEY` secret and publishes the release.
 
