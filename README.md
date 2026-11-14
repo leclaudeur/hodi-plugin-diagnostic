@@ -10,7 +10,7 @@ It gathers everything needed to fix it into one pack, ready to send.
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
 [![Patreon](https://img.shields.io/badge/Patreon-Le%20Claudeur-F96854?logo=patreon&logoColor=white)](https://www.patreon.com/cw/LeClaudeur)
 
-[**Install**](#install) · [**The pack**](#the-pack) · [**Fix the reader**](#help-fix-the-reader) · [**Develop**](#develop) · [**Release**](#release-a-signed-version) · [**Sponsor**](#sponsor)
+[**Install**](#install) · [**The pack**](#the-pack) · [**Fix the reader**](#fix-the-reader) · [**Develop**](#develop) · [**Release**](#release-a-signed-version) · [**Sponsor**](#sponsor)
 
 </div>
 
@@ -50,14 +50,14 @@ extracted.html   the text Hodi's reader took from it
 capture-<n>.png  the screenshots
 ```
 
-Send it to whoever fixes Hodi's reader or its sources, or [fix it yourself](#help-fix-the-reader). Once the fixes
+Send it to whoever fixes Hodi's reader or its sources, or [fix it yourself](#fix-the-reader). Once the fixes
 are in, click **Empty**.
 
 > [!NOTE]
 > On a server with several households, each admin sees only their own reports. What Hodi spots on its own is about
 > the reader, so only the server's admin sees it.
 
-## Help fix the reader
+## Fix the reader
 
 A pack holds all it takes to fix what the reader gets wrong, with or without code.
 
