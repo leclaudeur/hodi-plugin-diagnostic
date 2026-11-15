@@ -8,7 +8,7 @@ release pull request raises `version` and moves the lines under it, then the tag
 
 ## [Unreleased]
 
-## [1.0.0-beta.1] - 2026-11-14
+## [1.0.0-beta.1] - 2026-11-15
 
 The first beta, released with Hodi 1.0.0-beta.1: the same as 0.2.2 for a household.
 
