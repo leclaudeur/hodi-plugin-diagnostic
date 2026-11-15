@@ -12,6 +12,10 @@ release pull request raises `version` and moves the lines under it, then the tag
 
 The first beta, released with Hodi 1.0.0-beta.1: the same as 0.2.2 for a household.
 
+### Changed
+
+- Built with `@hodi-app/plugin-sdk` 1.0.0-beta.2.
+
 ## [0.2.2] - 2026-11-11
 
 ### Added
