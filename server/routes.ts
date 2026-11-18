@@ -2,7 +2,7 @@ import type { PluginArticle, PluginContext, PluginRequest, PluginRoutes } from '
 import { CAPTURES_MAX, addCapture, prune } from './capture-store.ts'
 import { CAPTURE_MAX_BYTES, captureType } from './captures.ts'
 import { NOTE_MAX, PICKED, type Picked } from './issues.ts'
-import { DAY, readLimits } from './limits.ts'
+import { DAY, readLimits, roomBytes } from './limits.ts'
 import { type Store, createStore } from './store.ts'
 
 // What every profile does from the reader, on its own reports only:
@@ -75,7 +75,7 @@ export const routes: PluginRoutes = {
     if (!article) return { status: 404, body: { error: 'not_found' } }
     await keep(ctx, store, article)
     const id = store.add({ ...report, articleId: article.id, auto: false, now })
-    prune(ctx.db, readLimits(ctx.db).megabytes * 1024 * 1024)
+    prune(ctx.db, roomBytes(readLimits(ctx.db)))
     ctx.log(`report ${id} on ${article.url}`)
     return { status: 201, body: { id } }
   },
@@ -94,7 +94,7 @@ export const routes: PluginRoutes = {
       const type = captureType(bytes)
       if (!type) return { status: 415, body: { error: 'not_an_image' } }
       addCapture(ctx.db, report.id, type, bytes, Date.now())
-      prune(ctx.db, readLimits(ctx.db).megabytes * 1024 * 1024)
+      prune(ctx.db, roomBytes(readLimits(ctx.db)))
       return { status: 201 }
     }
   },

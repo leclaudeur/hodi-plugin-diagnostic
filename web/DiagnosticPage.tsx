@@ -1,7 +1,8 @@
-import { ChevronDown, Download, Flag, Image, Trash2 } from 'lucide-react'
+import { Download, Flag, Image, Trash2 } from 'lucide-react'
 import { useState } from 'react'
 import {
   EmptyState,
+  MoreRow,
   SectionPage,
   SettingRow,
   SettingsCard,
@@ -84,7 +85,7 @@ const ReportedRow = ({ row }: { row: ReportedArticle }) => {
 // How full the pack is, against the room the server's admin gives it.
 const PackGauge = ({ summary }: { summary: Summary }) => {
   const { t, language } = usePluginTranslation()
-  const room = summary.limits.megabytes * 1024 * 1024
+  const room = summary.limits.megabytes * 1_000_000
   const share = Math.min(1, summary.bytes / room)
   return (
     <div className="diagnostic-gauge">
@@ -141,16 +142,13 @@ const DiagnosticPage = ({ layout }: { layout: 'desktop' | 'phone' }) => {
             {t('page.emptyText')}
           </EmptyState>
         ) : (
-          <ul className="diagnostic-list">
+          <ul className={unfolded ? 'diagnostic-list diagnostic-list-open' : 'diagnostic-list'}>
             {shown.map(row => (
               <ReportedRow key={row.articleId} row={row} />
             ))}
             {folded && (
               <li>
-                <button type="button" className="diagnostic-row diagnostic-more" onClick={() => setUnfolded(true)}>
-                  <span>{t('page.more', { count: rows.length - FOLDED })}</span>
-                  <ChevronDown size={16} aria-hidden="true" />
-                </button>
+                <MoreRow label={t('page.more', { count: rows.length - FOLDED })} onClick={() => setUnfolded(true)} />
               </li>
             )}
           </ul>

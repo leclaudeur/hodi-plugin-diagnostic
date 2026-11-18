@@ -11,8 +11,16 @@ import {
   usePluginTranslation
 } from 'hodi:sdk'
 import { type LimitKey, type Summary, reportsChanged, useDiagnosticApi } from './api.ts'
+import { sizeText } from './format.ts'
 
 const KEYS: LimitKey[] = ['megabytes', 'days', 'perDay']
+
+// "500 Mo", then "1,25 Go" past a thousand: the room in Hodi's units, the other limits as their own text.
+const useLimitText = () => {
+  const { t, language } = usePluginTranslation()
+  return (key: LimitKey, value: number) =>
+    key === 'megabytes' ? sizeText(value * 1_000_000, language, t) : t(`limits.${key}.value`, { count: value })
+}
 // How far one press of − or + goes, and the faster steps of a long press.
 const STEPS: Record<LimitKey, { step: number; fast?: number[] }> = {
   megabytes: { step: 50, fast: [250, 500] },
@@ -31,6 +39,7 @@ interface LimitDialogProps {
 const LimitDialog = ({ open, limit, summary, onClose }: LimitDialogProps) => {
   const { t } = usePluginTranslation()
   const ask = useDiagnosticApi('server')
+  const limitText = useLimitText()
   const [value, setValue] = useState(summary.limits[limit])
   const [saving, setSaving] = useState(false)
   const [failed, setFailed] = useState(false)
@@ -66,7 +75,7 @@ const LimitDialog = ({ open, limit, summary, onClose }: LimitDialogProps) => {
           fastSteps={STEPS[limit].fast}
           onChange={setValue}
         >
-          {t(`limits.${limit}.value`, { count: value })}
+          {limitText(limit, value)}
         </Stepper>
         {failed && <StatusLine tone="error">{t('page.failed')}</StatusLine>}
         <DialogActions>
@@ -85,6 +94,7 @@ const LimitDialog = ({ open, limit, summary, onClose }: LimitDialogProps) => {
 // Serveur › Diagnostic's limits: the room the pack may take, how long a report stays, how many a profile makes a day.
 const LimitsCard = ({ summary }: { summary: Summary }) => {
   const { t } = usePluginTranslation()
+  const limitText = useLimitText()
   const [open, setOpen] = useState(false)
   const [limit, setLimit] = useState<LimitKey>('megabytes')
   // A new dialog each time one opens, so it starts from the limit's value; the last one stays to close gently.
@@ -101,7 +111,7 @@ const LimitsCard = ({ summary }: { summary: Summary }) => {
         <SettingRow
           key={key}
           label={t(`limits.${key}.title`)}
-          value={t(`limits.${key}.value`, { count: summary.limits[key] })}
+          value={limitText(key, summary.limits[key])}
           action={{ label: t('limits.change'), icon: Pencil, onClick: () => change(key) }}
         />
       ))}

@@ -1,6 +1,6 @@
 import type { PluginRoutes } from '@hodi-app/plugin-sdk/server'
 import { prune } from './capture-store.ts'
-import { LIMITS, isLimitKey, readLimits, writeLimit } from './limits.ts'
+import { LIMITS, isLimitKey, readLimits, roomBytes, writeLimit } from './limits.ts'
 import { packEntries, packName } from './pack.ts'
 import { createStore } from './store.ts'
 
@@ -22,7 +22,7 @@ export const serverRoutes: PluginRoutes = {
     const { key, value } = (request.body ?? {}) as Record<string, unknown>
     if (!isLimitKey(key) || !writeLimit(ctx.db, key, value)) return { status: 400, body: { error: 'invalid_limit' } }
     // A smaller room applies at once.
-    if (key === 'megabytes') prune(ctx.db, readLimits(ctx.db).megabytes * 1024 * 1024)
+    if (key === 'megabytes') prune(ctx.db, roomBytes(readLimits(ctx.db)))
     return { body: { limits: readLimits(ctx.db) } }
   },
 

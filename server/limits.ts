@@ -34,3 +34,6 @@ export const writeLimit = (db: Database, key: LimitKey, value: unknown) => {
 }
 
 export const DAY = 24 * 60 * 60 * 1000
+
+// The room in bytes, counted in thousands as Hodi shows sizes: 500 MB is 500,000,000 bytes.
+export const roomBytes = (limits: Limits) => limits.megabytes * 1_000_000
