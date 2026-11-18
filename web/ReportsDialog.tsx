@@ -41,8 +41,12 @@ const ReportsDialog = ({ open, reports, onClose, onAdd }: ReportsDialogProps) =>
             <span className="diagnostic-report-text">
               <span className="diagnostic-report-issues">
                 {issuesText(report.issues, t)}
-                {report.capture && (
-                  <Image size={14} className="diagnostic-capture-icon" aria-label={t('page.withCapture')} />
+                {report.captures > 0 && (
+                  <Image
+                    size={14}
+                    className="diagnostic-capture-icon"
+                    aria-label={t('page.withCaptures', { count: report.captures })}
+                  />
                 )}
               </span>
               {report.note && <span className="diagnostic-report-note">{report.note}</span>}

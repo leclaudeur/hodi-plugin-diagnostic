@@ -1,8 +1,9 @@
 import { useCallback, useEffect, useState } from 'react'
-import { usePluginApi } from 'hodi:sdk'
+import { usePluginApi, usePluginServerApi } from 'hodi:sdk'
 
-// What the web part asks the plugin's server (server/index.ts), and the event that tells every part of it, the
-// reader's button, the page and its entry in Réglages, that the reports changed.
+// What the web part asks the plugin's server: a profile's own reports (server/routes.ts), and Serveur › Diagnostic
+// (server/server-routes.ts). The event tells every part of it, the reader's button, the section and its entry, that
+// the reports changed.
 
 export interface ReportedArticle {
   articleId: string
@@ -11,21 +12,27 @@ export interface ReportedArticle {
   sourceName: string
   issues: string[]
   auto: boolean
+  reports: number
   captures: number
   at: number
 }
+
+export type LimitKey = 'megabytes' | 'days' | 'perDay'
+export type Limits = Record<LimitKey, number>
 
 export interface Summary {
   articles: number
   bytes: number
   rows: ReportedArticle[]
+  limits: Limits
+  bounds: Record<LimitKey, { min: number; max: number }>
 }
 
 export interface Report {
   id: number
   issues: string[]
   note: string | null
-  capture: boolean
+  captures: number
   createdAt: number
 }
 
@@ -41,8 +48,11 @@ export class RequestError extends Error {
   }
 }
 
-export const useDiagnosticApi = () => {
-  const api = usePluginApi()
+// Asks the profile's routes, or the server's with on: 'server'.
+export const useDiagnosticApi = (on: 'profile' | 'server' = 'profile') => {
+  const profileApi = usePluginApi()
+  const serverApi = usePluginServerApi()
+  const api = on === 'server' ? serverApi : profileApi
   return useCallback(
     async <T>(path: string, init?: RequestInit): Promise<T> => {
       const response = await api(path, init)
@@ -58,8 +68,8 @@ export const useDiagnosticApi = () => {
 
 // What the server answers to path, asked again whenever the reports change. null while it comes; failed when it
 // did not answer.
-export const useAsked = <T>(path: string) => {
-  const ask = useDiagnosticApi()
+export const useAsked = <T>(path: string, on: 'profile' | 'server' = 'profile') => {
+  const ask = useDiagnosticApi(on)
   const [state, setState] = useState<{ data: T | null; failed: boolean }>({ data: null, failed: false })
 
   useEffect(() => {

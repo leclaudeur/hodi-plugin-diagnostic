@@ -1,67 +1,14 @@
 import type { PluginArticle, PluginContext } from '@hodi-app/plugin-sdk/server'
+import { keepArticle, keptArticle } from './article-store.ts'
+import { type Capture, capturesOf, removeReports, storedBytes } from './capture-store.ts'
 import type { Issue } from './issues.ts'
 
 type Database = PluginContext['db']
 
-// The plugin's own tables, one statement a step. Appended to, never edited once released. They keep the names they had
-// in Hodi's database (plugin API 1), and IF NOT EXISTS: Hodi copies the tables of API 1 over before the first start, so
-// the reports already made stay.
-export const MIGRATIONS = [
-  `
-  -- What is wrong with an article: reported by the admin (auto 0), or spotted by Hodi as it read it (auto 1).
-  CREATE TABLE IF NOT EXISTS plugin_diagnostic_reports (
-    id INTEGER PRIMARY KEY,
-    article_id TEXT NOT NULL,
-    auto INTEGER NOT NULL,
-    -- A JSON array of issues (issues.ts).
-    issues TEXT NOT NULL,
-    -- The admin's words: a precision, or what "Autre" is.
-    note TEXT,
-    -- The screenshot's type and size; its bytes are in plugin_diagnostic_captures.
-    capture_type TEXT,
-    capture_bytes INTEGER,
-    created_at INTEGER NOT NULL
-  )`,
-  'CREATE INDEX IF NOT EXISTS plugin_diagnostic_reports_article ON plugin_diagnostic_reports (article_id)',
-  `
-  -- The article as Hodi had it when it was first reported: its reader text and its page on its site, for the pack.
-  CREATE TABLE IF NOT EXISTS plugin_diagnostic_articles (
-    article_id TEXT PRIMARY KEY,
-    title TEXT NOT NULL,
-    url TEXT NOT NULL,
-    source_id TEXT NOT NULL,
-    source_name TEXT NOT NULL,
-    published_at TEXT,
-    status TEXT NOT NULL,
-    text_length INTEGER,
-    extracted_html TEXT,
-    page_url TEXT,
-    page_html TEXT,
-    kept_at INTEGER NOT NULL
-  )`,
-  // The screenshots' bytes, in the plugin's own database since plugin API 2.
-  `CREATE TABLE IF NOT EXISTS plugin_diagnostic_captures (
-    report_id INTEGER PRIMARY KEY,
-    data BLOB NOT NULL
-  )`,
-  // The screenshots of plugin API 1 were files Hodi does not carry over: their reports no longer say they have one.
-  `UPDATE plugin_diagnostic_reports SET capture_type = NULL, capture_bytes = NULL
-   WHERE capture_type IS NOT NULL AND id NOT IN (SELECT report_id FROM plugin_diagnostic_captures)`,
-  // The household a report was made in: one plugin serves every household of the server. Null for what Hodi spotted
-  // alone, which is about the reader and not any household, and which only the server's admin sees.
-  'ALTER TABLE plugin_diagnostic_reports ADD COLUMN household_id INTEGER',
-  // Before plugin API 2 there was one household per server: the admin's reports were all made in the first one.
-  'UPDATE plugin_diagnostic_reports SET household_id = 1 WHERE auto = 0 AND household_id IS NULL',
-  'CREATE INDEX IF NOT EXISTS plugin_diagnostic_reports_household ON plugin_diagnostic_reports (household_id)'
-]
+export { MIGRATIONS } from './migrations.ts'
 
-// Who looks: the reports made in their household, and what Hodi spotted alone when they run the server.
-export interface Scope {
-  householdId: number
-  serverAdmin: boolean
-}
-
-export type CaptureType = 'png' | 'jpg'
+// Who looks: a profile sees its own reports, the server's admin sees them all, with what Hodi spotted alone.
+export type Scope = { profileId: number; householdId: number } | 'server'
 
 export interface Report {
   id: number
@@ -69,27 +16,11 @@ export interface Report {
   auto: boolean
   issues: Issue[]
   note: string | null
-  capture: { type: CaptureType; bytes: number } | null
+  captures: Capture[]
   createdAt: number
 }
 
-export interface KeptArticle {
-  articleId: string
-  title: string
-  url: string
-  sourceId: string
-  sourceName: string
-  publishedAt: string | null
-  status: string
-  textLength: number | null
-  // Whether the reader's text and the page are kept: the pack's zip reads them from the database itself.
-  hasText: boolean
-  pageUrl: string | null
-  hasPage: boolean
-  keptAt: number
-}
-
-// One row of Réglages › Diagnostic: an article and all that was said about it.
+// One row of Serveur › Diagnostic: an article and all that was said about it.
 export interface ReportedArticle {
   articleId: string
   title: string
@@ -99,6 +30,8 @@ export interface ReportedArticle {
   issues: Issue[]
   // Only spotted by Hodi, never reported.
   auto: boolean
+  // How many times profiles reported it.
+  reports: number
   captures: number
   // The last report.
   at: number
@@ -110,70 +43,7 @@ interface ReportRow {
   auto: number
   issues: string
   note: string | null
-  capture_type: string | null
-  capture_bytes: number | null
   created_at: number
-}
-
-const toReport = (row: ReportRow): Report => ({
-  id: row.id,
-  articleId: row.article_id,
-  auto: row.auto === 1,
-  issues: JSON.parse(row.issues) as Issue[],
-  note: row.note,
-  capture:
-    row.capture_type && row.capture_bytes !== null
-      ? { type: row.capture_type as CaptureType, bytes: row.capture_bytes }
-      : null,
-  createdAt: row.created_at
-})
-
-const keepArticle = (db: Database, article: PluginArticle, page: { url: string; html: string } | null, now: number) => {
-  db.run(
-    `INSERT OR REPLACE INTO plugin_diagnostic_articles
-       (article_id, title, url, source_id, source_name, published_at, status, text_length, extracted_html,
-        page_url, page_html, kept_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-    [
-      article.id,
-      article.title,
-      article.url,
-      article.sourceId,
-      article.sourceName,
-      article.publishedAt,
-      article.status,
-      article.text?.textLength ?? null,
-      article.text?.contentHtml ?? null,
-      page?.url ?? null,
-      page?.html ?? null,
-      now
-    ]
-  )
-}
-
-const keptArticle = (db: Database, articleId: string) => {
-  // Without the HTML itself, which can weigh hundreds of KB per article.
-  const row = db.get(
-    `SELECT article_id, title, url, source_id, source_name, published_at, status, text_length, page_url, kept_at,
-            extracted_html IS NOT NULL AS has_text, page_html IS NOT NULL AS has_page
-     FROM plugin_diagnostic_articles WHERE article_id = ?`,
-    [articleId]
-  )
-  if (!row) return null
-  return {
-    articleId: String(row.article_id),
-    title: String(row.title),
-    url: String(row.url),
-    sourceId: String(row.source_id),
-    sourceName: String(row.source_name),
-    publishedAt: row.published_at === null ? null : String(row.published_at),
-    status: String(row.status),
-    textLength: row.text_length === null ? null : Number(row.text_length),
-    hasText: Number(row.has_text) === 1,
-    pageUrl: row.page_url === null ? null : String(row.page_url),
-    hasPage: Number(row.has_page) === 1,
-    keptAt: Number(row.kept_at)
-  } satisfies KeptArticle
 }
 
 const reportedArticles = (db: Database, all: Report[]): ReportedArticle[] => {
@@ -194,54 +64,44 @@ const reportedArticles = (db: Database, all: Report[]): ReportedArticle[] => {
       sourceName: String(article.source_name),
       issues: [...new Set(said.flatMap(report => report.issues))],
       auto: said.every(report => report.auto),
-      captures: said.filter(report => report.capture).length,
+      reports: said.filter(report => !report.auto).length,
+      captures: said.reduce((count, report) => count + report.captures.length, 0),
       at: Math.max(...said.map(report => report.createdAt))
     })
   }
   return rows.sort((a, b) => b.at - a.at)
 }
 
-// The reports a scope sees, as a condition and its values.
-interface Visible {
-  sql: string
-  params: (string | number)[]
-}
-
-const packBytes = (db: Database, visible: Visible) => {
-  const texts = db.get(
-    `SELECT COALESCE(SUM(COALESCE(LENGTH(CAST(extracted_html AS BLOB)), 0) + COALESCE(LENGTH(CAST(page_html AS BLOB)), 0)), 0) AS bytes
-     FROM plugin_diagnostic_articles
-     WHERE article_id IN (SELECT article_id FROM plugin_diagnostic_reports WHERE ${visible.sql})`,
-    visible.params
-  )
-  const captures = db.get(
-    `SELECT COALESCE(SUM(capture_bytes), 0) AS bytes FROM plugin_diagnostic_reports WHERE ${visible.sql}`,
-    visible.params
-  )
-  return Number(texts?.bytes ?? 0) + Number(captures?.bytes ?? 0)
+// The reports a scope sees, as a condition and its values; none without one (the hook only writes what Hodi spots).
+const visibleTo = (scope: Scope | null) => {
+  if (scope === 'server') return { sql: '1', params: [] as (string | number)[] }
+  if (scope === null) return { sql: '0', params: [] as (string | number)[] }
+  return { sql: '(household_id = ? AND profile_id = ?)', params: [scope.householdId, scope.profileId] }
 }
 
 export const createStore = (db: Database, scope: Scope | null) => {
-  // The reports the scope sees; none without one (the hook only writes what Hodi spots).
-  const visible: Visible = scope
-    ? {
-        sql: '(household_id = ? OR (household_id IS NULL AND ? = 1))',
-        params: [scope.householdId, scope.serverAdmin ? 1 : 0]
-      }
-    : { sql: '0', params: [] }
-  const reports = (where: string, ...values: (string | number)[]) =>
-    (
-      db.query(
-        `SELECT * FROM plugin_diagnostic_reports WHERE ${visible.sql} ${where ? `AND ${where}` : ''}
-         ORDER BY created_at, id`,
-        [...visible.params, ...values]
-      ) as unknown as ReportRow[]
-    ).map(toReport)
-  // Kept articles are shared by the households: one goes once no report of any household is about it.
-  const dropUnreported = () =>
-    db.run(
-      'DELETE FROM plugin_diagnostic_articles WHERE article_id NOT IN (SELECT article_id FROM plugin_diagnostic_reports)'
+  const visible = visibleTo(scope)
+  const owner = scope === 'server' ? null : scope
+  const reports = (where: string, ...values: (string | number)[]) => {
+    const rows = db.query(
+      `SELECT id, article_id, auto, issues, note, created_at FROM plugin_diagnostic_reports
+       WHERE ${visible.sql} ${where ? `AND ${where}` : ''} ORDER BY created_at, id`,
+      [...visible.params, ...values]
+    ) as unknown as ReportRow[]
+    const captures = capturesOf(
+      db,
+      rows.map(row => row.id)
     )
+    return rows.map((row): Report => ({
+      id: row.id,
+      articleId: row.article_id,
+      auto: row.auto === 1,
+      issues: JSON.parse(row.issues) as Issue[],
+      note: row.note,
+      captures: captures.get(row.id) ?? [],
+      createdAt: row.created_at
+    }))
+  }
 
   const kept = (articleId: string) =>
     db.get('SELECT 1 FROM plugin_diagnostic_articles WHERE article_id = ?', [articleId]) !== null
@@ -257,24 +117,34 @@ export const createStore = (db: Database, scope: Scope | null) => {
     add: (report: { articleId: string; auto: boolean; issues: readonly Issue[]; note?: string | null; now: number }) =>
       Number(
         db.run(
-          `INSERT INTO plugin_diagnostic_reports (article_id, auto, issues, note, created_at, household_id)
-           VALUES (?, ?, ?, ?, ?, ?)`,
+          `INSERT INTO plugin_diagnostic_reports (article_id, auto, issues, note, created_at, household_id, profile_id)
+           VALUES (?, ?, ?, ?, ?, ?, ?)`,
           [
             report.articleId,
             report.auto ? 1 : 0,
             JSON.stringify(report.issues),
             report.note ?? null,
             report.now,
-            // What Hodi spots belongs to no household.
-            report.auto ? null : (scope?.householdId ?? null)
+            // What Hodi spots belongs to no household nor profile.
+            report.auto ? null : (owner?.householdId ?? null),
+            report.auto ? null : (owner?.profileId ?? null)
           ]
         ).lastInsertRowid
       ),
 
     get: (id: number) => reports('id = ?', id)[0] ?? null,
 
-    // The admin's reports on an article, for the dialog: the spotted ones are not theirs to remove there.
+    // The profile's reports on an article, for the dialog: the spotted ones are not theirs to remove there.
     reportedOn: (articleId: string) => reports('article_id = ? AND auto = 0', articleId),
+
+    // How many reports the profile made since a moment: a day's limit.
+    madeSince: (since: number) =>
+      Number(
+        db.get(
+          `SELECT COUNT(*) AS count FROM plugin_diagnostic_reports WHERE ${visible.sql} AND auto = 0 AND created_at > ?`,
+          [...visible.params, since]
+        )?.count ?? 0
+      ),
 
     spottedOn: (articleId: string) =>
       db.get('SELECT 1 FROM plugin_diagnostic_reports WHERE article_id = ? AND auto = 1', [articleId]) !== null,
@@ -282,43 +152,23 @@ export const createStore = (db: Database, scope: Scope | null) => {
     spottedCount: () =>
       Number(db.get('SELECT COUNT(*) AS count FROM plugin_diagnostic_reports WHERE auto = 1')?.count ?? 0),
 
-    setCapture: (id: number, type: CaptureType, bytes: Uint8Array) => {
-      db.run('INSERT OR REPLACE INTO plugin_diagnostic_captures (report_id, data) VALUES (?, ?)', [id, bytes])
-      db.run('UPDATE plugin_diagnostic_reports SET capture_type = ?, capture_bytes = ? WHERE id = ?', [
-        type,
-        bytes.length,
-        id
-      ])
-    },
-
     // Removes a report, and the article it was about once nothing else is said about it.
     remove: (id: number) => {
       const report = reports('id = ?', id)[0]
       if (!report) return null
-      db.run('DELETE FROM plugin_diagnostic_captures WHERE report_id = ?', [id])
-      db.run('DELETE FROM plugin_diagnostic_reports WHERE id = ?', [id])
-      dropUnreported()
+      removeReports(db, 'id = ?', [id])
       return report
     },
 
     all: () => reports(''),
 
-    // The rows of Réglages › Diagnostic, the last reported first.
+    // The rows of Serveur › Diagnostic, the last reported first.
     list: (): ReportedArticle[] => reportedArticles(db, reports('')),
 
-    // What the pack holds, before it is compressed: the pages, the texts and the captures.
-    bytes: () => packBytes(db, visible),
+    bytes: () => storedBytes(db),
 
-    // Empties what the scope sees; the other households' reports stay.
-    clear: () => {
-      db.run(
-        `DELETE FROM plugin_diagnostic_captures
-         WHERE report_id IN (SELECT id FROM plugin_diagnostic_reports WHERE ${visible.sql})`,
-        visible.params
-      )
-      db.run(`DELETE FROM plugin_diagnostic_reports WHERE ${visible.sql}`, visible.params)
-      dropUnreported()
-    }
+    // Empties what the scope sees.
+    clear: () => removeReports(db, visible.sql, visible.params)
   }
 }
 

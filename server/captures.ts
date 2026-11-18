@@ -1,4 +1,4 @@
-import type { CaptureType } from './store.ts'
+import type { CaptureType } from './capture-store.ts'
 
 // A screenshot is at most this big, as the dialog says. Hodi refuses a bigger body before the plugin runs.
 export const CAPTURE_MAX_BYTES = 5 * 1024 * 1024

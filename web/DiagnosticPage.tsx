@@ -1,7 +1,6 @@
 import { ChevronDown, Download, Flag, Image, Trash2 } from 'lucide-react'
 import { useState } from 'react'
 import {
-  Button,
   EmptyState,
   SectionPage,
   SettingRow,
@@ -17,17 +16,18 @@ import {
 } from 'hodi:sdk'
 import { type ReportedArticle, type Summary, reportsChanged, useAsked, useDiagnosticApi } from './api.ts'
 import { issuesText, sizeText } from './format.ts'
+import LimitsCard from './LimitsCard.tsx'
 import ReportedSkeleton from './ReportedSkeleton.tsx'
 
 // Past three rows the others fold under a last one, which never hides a single row (as the teens' requests).
 const FOLDED = 3
-const PACK_HREF = '/api/plugins/diagnostic/pack'
+const PACK_HREF = '/api/server/plugins/diagnostic/pack'
 const lowerFirst = (text: string) => text.charAt(0).toLowerCase() + text.slice(1)
 
 // The admin empties the list once the pack is sent, after confirming.
 const useClear = () => {
   const { t } = usePluginTranslation()
-  const ask = useDiagnosticApi()
+  const ask = useDiagnosticApi('server')
   const [clearing, setClearing] = useState(false)
 
   const clear = () =>
@@ -63,12 +63,17 @@ const ReportedRow = ({ row }: { row: ReportedArticle }) => {
         <span className="diagnostic-row-issues">
           {row.auto ? `${t('page.auto')} · ${lowerFirst(issuesText(row.issues, t))}` : issuesText(row.issues, t)}
           {row.captures > 0 && (
-            <Image size={14} className="diagnostic-capture-icon" aria-label={t('page.withCapture')} />
+            <Image
+              size={14}
+              className="diagnostic-capture-icon"
+              aria-label={t('page.withCaptures', { count: row.captures })}
+            />
           )}
         </span>
         <span className="diagnostic-row-meta">
           <SourceAvatar sourceId={row.sourceId} sourceName={row.sourceName} size={18} />
           <span>{row.sourceName}</span>
+          {row.reports > 1 && <span>· {t('page.times', { count: row.reports })}</span>}
           <span className="diagnostic-row-time">· {shortAgo(new Date(row.at).toISOString())}</span>
         </span>
       </a>
@@ -76,11 +81,26 @@ const ReportedRow = ({ row }: { row: ReportedArticle }) => {
   )
 }
 
-// Réglages › Diagnostic, for the admin: the pack to download, what was reported or spotted, and emptying the list
-// once the pack is sent.
-const DiagnosticPage = ({ layout }: { layout: 'desktop' | 'phone' }) => {
+// How full the pack is, against the room the server's admin gives it.
+const PackGauge = ({ summary }: { summary: Summary }) => {
   const { t, language } = usePluginTranslation()
-  const { data, failed } = useAsked<Summary>('/summary')
+  const room = summary.limits.megabytes * 1024 * 1024
+  const share = Math.min(1, summary.bytes / room)
+  return (
+    <div className="diagnostic-gauge">
+      <progress className="diagnostic-gauge-bar" value={share} max={1} aria-label={t('page.gaugeLabel')} />
+      <span className="diagnostic-gauge-text">
+        {t('page.gauge', { size: sizeText(summary.bytes, language, t), room: sizeText(room, language, t) })}
+      </span>
+    </div>
+  )
+}
+
+// Serveur › Diagnostic: the pack to download and how full it is, what every profile reported or Hodi spotted, the
+// limits, and emptying the list once the pack is sent.
+const DiagnosticPage = ({ layout }: { layout: 'desktop' | 'phone' }) => {
+  const { t } = usePluginTranslation()
+  const { data, failed } = useAsked<Summary>('/summary', 'server')
   const [unfolded, setUnfolded] = useState(false)
   const { clearing, clear } = useClear()
 
@@ -102,19 +122,15 @@ const DiagnosticPage = ({ layout }: { layout: 'desktop' | 'phone' }) => {
       <SettingsCard label={t('page.pack')}>
         <SettingRow
           label={t('page.packTitle')}
-          hint={
-            data && data.articles > 0
-              ? t('page.packHint', {
-                  articles: t('page.articles', { count: data.articles }),
-                  size: sizeText(data.bytes, language, t)
-                })
-              : t('page.packEmpty')
-          }
-        >
-          <Button icon={Download} disabled={!data || data.articles === 0} onClick={download}>
-            {t('page.download')}
-          </Button>
-        </SettingRow>
+          hint={data && data.articles > 0 ? t('page.articles', { count: data.articles }) : t('page.packEmpty')}
+          action={{
+            label: t('page.download'),
+            icon: Download,
+            disabled: !data || data.articles === 0,
+            onClick: download
+          }}
+        />
+        {data && <PackGauge summary={data} />}
       </SettingsCard>
 
       <SettingsCard label={t('page.reported')}>
@@ -141,12 +157,21 @@ const DiagnosticPage = ({ layout }: { layout: 'desktop' | 'phone' }) => {
         )}
       </SettingsCard>
 
+      {data && <LimitsCard summary={data} />}
+
       <SettingsCard label={t('page.after')}>
-        <SettingRow label={t('page.clear')} hint={t('page.clearHint')}>
-          <Button look="danger" icon={Trash2} busy={clearing} disabled={rows.length === 0} onClick={clear}>
-            {t('page.clearButton')}
-          </Button>
-        </SettingRow>
+        <SettingRow
+          label={t('page.clear')}
+          hint={t('page.clearHint')}
+          action={{
+            label: t('page.clearButton'),
+            icon: Trash2,
+            look: 'danger',
+            busy: clearing,
+            disabled: rows.length === 0,
+            onClick: clear
+          }}
+        />
       </SettingsCard>
     </SectionPage>
   )

@@ -4,13 +4,9 @@
   "version": "1.0.0-beta.1",
   "description": "Signale ce que le lecteur rate sur un article, et prépare un pack pour le corriger.",
   "api": 2,
-  "audience": "admin",
+  "audience": "all",
   "permissions": {
     "articles": true
-  },
-  "menu": {
-    "group": "household",
-    "after": "ai"
   },
   "settings": [
     {

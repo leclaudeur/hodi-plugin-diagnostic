@@ -19,13 +19,13 @@ const ChosenCapture = ({ file, disabled, onRemove }: { file: File; disabled: boo
   const { t, language } = usePluginTranslation()
   return (
     <li className="diagnostic-capture-item">
-      <ImageIcon size={16} aria-hidden="true" />
+      <ImageIcon size={14} aria-hidden="true" />
       <span className="diagnostic-capture-name">{file.name}</span>
       <span className="diagnostic-capture-size">{sizeText(file.size, language, t)}</span>
       <RoundButton
         icon={X}
         label={t('capture.remove', { name: file.name })}
-        size={34}
+        size={28}
         disabled={disabled}
         onClick={onRemove}
       />
@@ -104,33 +104,42 @@ const CaptureField = ({ files, onChange, disabled = false }: CaptureFieldProps) 
         hidden
         onChange={event => void choose([...(event.target.files ?? [])])}
       />
-      <button
-        type="button"
-        className={`diagnostic-capture-row diagnostic-capture-drop ${over ? 'diagnostic-capture-over' : ''}`}
-        disabled={busy}
-        onClick={() => input.current?.click()}
+      {/* One box: where screenshots are dropped, and those already taken under it. */}
+      <div
+        className={`diagnostic-capture-box ${over ? 'diagnostic-capture-over' : ''}`}
         onDragEnter={event => drag(event, true)}
         onDragOver={event => drag(event, true)}
         onDragLeave={event => drag(event, false)}
         onDrop={drop}
       >
-        <ImagePlus size={16} aria-hidden="true" />
-        <span className="diagnostic-capture-label">{t(label, { count: CAPTURES_MAX })}</span>
-        <span className="diagnostic-capture-hint">{t('capture.hint', { count: CAPTURES_MAX })}</span>
-      </button>
+        <button
+          type="button"
+          className="diagnostic-capture-row diagnostic-capture-drop"
+          disabled={busy}
+          onClick={() => input.current?.click()}
+        >
+          <span className="diagnostic-capture-tile">
+            <ImagePlus size={20} aria-hidden="true" />
+          </span>
+          <span className="diagnostic-capture-text">
+            <span className="diagnostic-capture-label">{t(label, { count: CAPTURES_MAX })}</span>
+            <span className="diagnostic-capture-hint">{t('capture.hint', { count: CAPTURES_MAX })}</span>
+          </span>
+        </button>
+        {files.length > 0 && (
+          <ul className="diagnostic-capture-list" aria-label={t('capture.list', { count: files.length })}>
+            {files.map((file, index) => (
+              <ChosenCapture
+                key={`${file.name}-${file.size}-${file.lastModified}`}
+                file={file}
+                disabled={disabled}
+                onRemove={() => onChange(files.filter((_, at) => at !== index))}
+              />
+            ))}
+          </ul>
+        )}
+      </div>
       {error && <StatusLine tone="error">{error}</StatusLine>}
-      {files.length > 0 && (
-        <ul className="diagnostic-capture-list" aria-label={t('capture.list', { count: files.length })}>
-          {files.map((file, index) => (
-            <ChosenCapture
-              key={`${file.name}-${file.size}-${file.lastModified}`}
-              file={file}
-              disabled={disabled}
-              onRemove={() => onChange(files.filter((_, at) => at !== index))}
-            />
-          ))}
-        </ul>
-      )}
     </div>
   )
 }

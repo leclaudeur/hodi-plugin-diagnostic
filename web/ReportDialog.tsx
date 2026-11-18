@@ -52,6 +52,8 @@ const sendReport = async (ask: ReturnType<typeof useDiagnosticApi>, draft: Draft
   }
 }
 
+const FAILURES: Record<number, string> = { 404: 'dialog.gone', 429: 'dialog.dailyLimit' }
+
 // What is kept with a report, in bold.
 const ReportIntro = () => {
   const { t } = usePluginTranslation()
@@ -123,6 +125,8 @@ const ReportDialog = ({ article, open, onClose, onSent }: ReportDialogProps) => 
   // "Autre" is said in the note, which it makes needed.
   const ready = issues.length > 0 && (!saysOther || note.trim().length > 0)
 
+  const failure = (caught: unknown) => t((caught instanceof RequestError && FAILURES[caught.status]) || 'dialog.failed')
+
   const send = async () => {
     setBusy(true)
     setError(null)
@@ -135,7 +139,7 @@ const ReportDialog = ({ article, open, onClose, onSent }: ReportDialogProps) => 
       reset()
       onSent()
     } catch (caught) {
-      setError(caught instanceof RequestError && caught.status === 404 ? t('dialog.gone') : t('dialog.failed'))
+      setError(failure(caught))
     } finally {
       setBusy(false)
     }

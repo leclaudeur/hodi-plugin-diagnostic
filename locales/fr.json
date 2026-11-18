@@ -32,10 +32,10 @@
     "title": "Signaler un souci",
     "introStart": "Dis ce qui ne va pas. Hodi garde ",
     "introKept": "la page d’origine et son extraction",
-    "introEnd": " pour ton pack de diagnostic.",
+    "introEnd": " pour la personne qui gère Hodi.",
     "issues": "Ce qui ne va pas",
     "otherPlaceholder": "Dis ce qui ne va pas (requis)",
-    "notePlaceholder": "Une précision ? (facultatif)",
+    "notePlaceholder": "Une précision, si besoin",
     "cancel": "Annuler",
     "send": "Signaler",
     "done": "Article signalé",
@@ -47,7 +47,8 @@
     "removeMessage": "Il quitte la liste et ton prochain pack.",
     "removeButton": "Retirer",
     "issuesPlaceholder": "Qu’est-ce qui ne va pas ?",
-    "issuesMore": "Autre chose ?"
+    "issuesMore": "Autre chose ?",
+    "dailyLimit": "Tu as assez signalé pour aujourd’hui. Reviens demain."
   },
   "list": {
     "title": "Déjà signalé",
@@ -56,10 +57,10 @@
     "add": "Signaler autre chose"
   },
   "capture": {
-    "choose": "Ajoute des captures",
+    "choose": "Choisis ou dépose des captures",
     "dropHere": "Dépose les captures ici",
     "reading": "Lecture des images…",
-    "hint": "PNG, JPG · 5 Mo",
+    "hint": "PNG, JPG · 5 Mo chacune · {{count}} au plus",
     "full": "{{count}} captures, c’est le maximum",
     "list": "Captures choisies",
     "remove": "Retirer {{name}}",
@@ -70,22 +71,20 @@
     }
   },
   "page": {
-    "title": "Diagnostic",
-    "intro": "Ce que tu as signalé sur tes sources, et ce que Hodi a repéré seul. Visible par toi seulement.",
+    "title": "Signalements",
+    "intro": "Ce que les profils de tous les foyers ont signalé, et ce que Hodi a repéré seul. Le pack sert à corriger le lecteur.",
     "pack": "Pack",
     "packTitle": "Pack de diagnostic",
-    "packHint": "{{articles}} · {{size}}",
     "packEmpty": "Vide pour l’instant",
     "articles_one": "{{count}} article",
     "articles_other": "{{count}} articles",
     "download": "Télécharger",
     "reported": "Signalés",
     "auto": "Repéré seul",
-    "withCapture": "Avec une capture",
     "more_one": "Voir l’autre",
     "more_other": "Voir les {{count}} autres",
     "emptyTitle": "Rien de signalé",
-    "emptyText": "Signale un article depuis le lecteur, sous son texte.",
+    "emptyText": "Les profils signalent un article depuis le lecteur, sous son texte.",
     "after": "Après l’envoi",
     "clear": "Vider la liste",
     "clearHint": "Une fois le pack envoyé et corrigé",
@@ -93,10 +92,44 @@
     "clearTitle": "Vider la liste ?",
     "clearMessage": "Les signalements, les pages gardées et les captures sont effacés pour de bon.",
     "cleared": "Liste vidée",
-    "failed": "Le diagnostic n’a pas répondu."
+    "failed": "Le diagnostic n’a pas répondu.",
+    "withCaptures_one": "Avec une capture",
+    "withCaptures_other": "Avec {{count}} captures",
+    "times_one": "{{count}} fois",
+    "times_other": "{{count}} fois",
+    "gauge": "{{size}} sur {{room}}",
+    "gaugeLabel": "Place prise par le pack"
   },
   "size": {
     "kb": "{{value}} Ko",
     "mb": "{{value}} Mo"
+  },
+  "sections": {
+    "reports": "Signalements"
+  },
+  "limits": {
+    "label": "Limites",
+    "change": "Changer",
+    "less": "Moins",
+    "more": "Plus",
+    "save": "Enregistrer",
+    "megabytes": {
+      "title": "Place pour le pack",
+      "intro": "Au-delà, Hodi efface d’abord les captures les plus anciennes, puis les signalements les plus anciens.",
+      "value_one": "{{count}} Mo",
+      "value_other": "{{count}} Mo"
+    },
+    "days": {
+      "title": "Durée de garde",
+      "intro": "Un signalement plus ancien s’efface, avec ses captures et sa page.",
+      "value_one": "{{count}} jour",
+      "value_other": "{{count}} jours"
+    },
+    "perDay": {
+      "title": "Signalements par jour",
+      "intro": "Ce qu’un profil peut signaler en 24 heures, pour qu’un seul ne remplisse pas le pack.",
+      "value_one": "{{count}} par profil",
+      "value_other": "{{count}} par profil"
+    }
   }
 }
