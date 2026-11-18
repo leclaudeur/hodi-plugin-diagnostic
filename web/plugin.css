@@ -9,21 +9,6 @@
   gap: 14px;
 }
 
-/* Its chips are Hodi's filter chips, in the text's font as the board has them: a problem is a phrase,
-   not a filter's name. */
-.diagnostic-chips {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-}
-
-.diagnostic-chips > button {
-  font-family: inherit;
-  font-size: 14px;
-  letter-spacing: normal;
-  text-transform: none;
-}
-
 .diagnostic-label {
   margin: 0 0 8px;
   color: var(--text-3);
@@ -94,10 +79,11 @@
 .diagnostic-capture-row {
   display: flex;
   align-items: center;
-  gap: 14px;
+  gap: 10px;
   width: 100%;
-  padding: 8px;
-  border-radius: 16px;
+  height: 44px;
+  padding: 0 16px;
+  border-radius: 22px;
   font: inherit;
   text-align: left;
 }
@@ -127,50 +113,66 @@
   }
 }
 
-.diagnostic-capture-chosen {
-  padding-right: 10px;
-  border: 1px solid var(--border);
-}
-
-.diagnostic-capture-tile {
-  display: grid;
-  flex-shrink: 0;
-  place-items: center;
-  width: 56px;
-  height: 56px;
-  overflow: hidden;
-  border: 1px dashed var(--border-strong);
-  border-radius: 12px;
-}
-
-.diagnostic-capture-chosen .diagnostic-capture-tile {
-  border-style: solid;
-  border-color: var(--border);
-  background: var(--tile);
-}
-
-.diagnostic-capture-tile img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  object-position: top;
-}
-
-.diagnostic-capture-text {
+/* The screenshots taken: a pill each, as wide as the zone, three in view and the rest by scrolling. */
+.diagnostic-capture-list {
   display: flex;
-  flex: 1;
   flex-direction: column;
-  gap: 4px;
+  gap: 6px;
+  /* Three pills of 44 and their two gaps. */
+  max-height: 144px;
+  margin: 0;
+  padding: 0;
+  overflow-y: auto;
+  list-style: none;
+  overscroll-behavior: contain;
+}
+
+.diagnostic-capture-item {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 10px;
+  height: 44px;
+  padding: 0 4px 0 16px;
+  border: 1px solid var(--border);
+  border-radius: 22px;
+  background: var(--control);
+  color: var(--text-3);
+}
+
+.diagnostic-capture-item > svg {
+  flex-shrink: 0;
+}
+
+.diagnostic-capture-name {
+  flex: 1;
   min-width: 0;
+  overflow: hidden;
+  color: var(--text);
+  font-size: 14px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.diagnostic-capture-size {
+  flex-shrink: 0;
+  font-family: var(--font-mono);
+  font-size: 11px;
 }
 
 .diagnostic-capture-label {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
   color: var(--text);
   font-size: 14px;
   font-weight: 500;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .diagnostic-capture-hint {
+  flex-shrink: 0;
   overflow: hidden;
   color: var(--text-3);
   font-family: var(--font-mono);

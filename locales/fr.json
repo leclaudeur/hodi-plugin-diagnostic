@@ -30,7 +30,7 @@
   },
   "dialog": {
     "title": "Signaler un souci",
-    "introStart": "Coche ce qui ne va pas. Hodi garde ",
+    "introStart": "Dis ce qui ne va pas. Hodi garde ",
     "introKept": "la page d’origine et son extraction",
     "introEnd": " pour ton pack de diagnostic.",
     "issues": "Ce qui ne va pas",
@@ -45,7 +45,9 @@
     "remove": "Retirer ce signalement",
     "removeTitle": "Retirer ce signalement ?",
     "removeMessage": "Il quitte la liste et ton prochain pack.",
-    "removeButton": "Retirer"
+    "removeButton": "Retirer",
+    "issuesPlaceholder": "Qu’est-ce qui ne va pas ?",
+    "issuesMore": "Autre chose ?"
   },
   "list": {
     "title": "Déjà signalé",
@@ -54,15 +56,17 @@
     "add": "Signaler autre chose"
   },
   "capture": {
-    "choose": "Choisis ou dépose une capture",
-    "dropHere": "Dépose la capture ici",
-    "reading": "Lecture de l’image…",
-    "hint": "PNG, JPG · 5 Mo max",
-    "chosen": "Capture d’écran",
-    "remove": "Retirer la capture",
+    "choose": "Ajoute des captures",
+    "dropHere": "Dépose les captures ici",
+    "reading": "Lecture des images…",
+    "hint": "PNG, JPG · 5 Mo",
+    "full": "{{count}} captures, c’est le maximum",
+    "list": "Captures choisies",
+    "remove": "Retirer {{name}}",
     "errors": {
-      "tooBig": "Cette image est trop grosse (5 Mo au plus).",
-      "notAnImage": "Ce fichier n’est pas une image PNG ou JPG."
+      "tooBig": "{{name}} est trop grosse (5 Mo au plus).",
+      "notAnImage": "{{name}} n’est pas une image PNG ou JPG.",
+      "tooMany": "{{count}} captures au plus par signalement."
     }
   },
   "page": {

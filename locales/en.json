@@ -30,7 +30,7 @@
   },
   "dialog": {
     "title": "Report a problem",
-    "introStart": "Tick what is wrong. Hodi keeps ",
+    "introStart": "Say what is wrong. Hodi keeps ",
     "introKept": "the original page and its extraction",
     "introEnd": " for your diagnostic pack.",
     "issues": "What is wrong",
@@ -45,7 +45,9 @@
     "remove": "Remove this report",
     "removeTitle": "Remove this report?",
     "removeMessage": "It leaves the list and your next pack.",
-    "removeButton": "Remove"
+    "removeButton": "Remove",
+    "issuesPlaceholder": "What’s wrong?",
+    "issuesMore": "Anything else?"
   },
   "list": {
     "title": "Already reported",
@@ -54,15 +56,17 @@
     "add": "Report more"
   },
   "capture": {
-    "choose": "Choose or drop a screenshot",
-    "dropHere": "Drop the screenshot here",
-    "reading": "Reading the image…",
-    "hint": "PNG, JPG · 5 MB max",
-    "chosen": "Screenshot",
-    "remove": "Remove the screenshot",
+    "choose": "Add screenshots",
+    "dropHere": "Drop the screenshots here",
+    "reading": "Reading the images…",
+    "hint": "PNG, JPG · 5 MB",
+    "full": "{{count}} screenshots, that’s the most",
+    "list": "Chosen screenshots",
+    "remove": "Remove {{name}}",
     "errors": {
-      "tooBig": "This image is too big (5 MB at most).",
-      "notAnImage": "This file is not a PNG or JPG image."
+      "tooBig": "{{name}} is too big (5 MB at most).",
+      "notAnImage": "{{name}} isn’t a PNG or JPG image.",
+      "tooMany": "{{count}} screenshots at most per report."
     }
   },
   "page": {
