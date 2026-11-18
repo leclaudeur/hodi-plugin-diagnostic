@@ -9,16 +9,6 @@
   gap: 14px;
 }
 
-.diagnostic-label {
-  margin: 0 0 8px;
-  color: var(--text-3);
-  font-family: var(--font-mono);
-  font-size: 11px;
-  font-weight: 400;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-}
-
 /* The reports already made, alone on their card: one row each, the issues then the note. */
 .diagnostic-reports {
   display: flex;

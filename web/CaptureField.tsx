@@ -4,8 +4,8 @@ import { RoundButton, StatusLine, usePluginTranslation } from 'hodi:sdk'
 import { sizeText } from './format.ts'
 
 // As the server checks them (server/captures.ts).
-export const CAPTURE_MAX_BYTES = 5 * 1024 * 1024
-export const CAPTURES_MAX = 5
+const CAPTURE_MAX_BYTES = 5 * 1024 * 1024
+const CAPTURES_MAX = 5
 
 const isImage = async (file: File) => {
   const bytes = new Uint8Array(await file.slice(0, 8).arrayBuffer())
