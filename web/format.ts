@@ -1,4 +1,4 @@
-// "412 Ko", "5,8 Mo", in the language shown.
+// "412 Ko", "5,8 Mo", "1,5 Go", in the language shown, counted in thousands as Hodi shows sizes.
 export const sizeText = (
   bytes: number,
   language: string,
@@ -6,9 +6,9 @@ export const sizeText = (
 ) => {
   const number = (value: number, digits: number) =>
     new Intl.NumberFormat(language, { maximumFractionDigits: digits }).format(value)
-  return bytes < 1024 * 1024
-    ? t('size.kb', { value: number(Math.max(1, Math.round(bytes / 1024)), 0) })
-    : t('size.mb', { value: number(bytes / (1024 * 1024), 1) })
+  if (bytes < 1_000_000) return t('size.kb', { value: number(Math.max(1, Math.round(bytes / 1000)), 0) })
+  if (bytes < 1_000_000_000) return t('size.mb', { value: number(bytes / 1_000_000, 1) })
+  return t('size.gb', { value: number(bytes / 1_000_000_000, 2) })
 }
 
 // The issues of a report as the list says them: "Texte coupé, éléments en trop".

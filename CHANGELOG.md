@@ -8,6 +8,21 @@ release pull request raises `version` and moves the lines under it, then the tag
 
 ## [Unreleased]
 
+### Changed
+
+- **Every profile reports.** « Signaler » is under every article for every profile, teens and children included, and
+  each sees only its own reports. The reports and the pack move from Réglages to the server's space, in Serveur ›
+  Diagnostic › Signalements, for whoever runs the server.
+- **Several issues and screenshots.** « Signaler un souci » picks several issues in one field, like a source's
+  topics, and takes up to 5 screenshots of 5 MB each, listed in the drop area.
+
+### Added
+
+- **Limits.** Serveur › Diagnostic › Signalements shows how much room the pack takes, and sets the room it may take
+  (500 MB by default, the oldest screenshots then reports erased past it), how long a report stays (90 days) and how
+  many reports a profile makes a day (10).
+- A deleted profile's reports, and a removed household's, go with it.
+
 ## [1.0.0-beta.1] - 2026-11-15
 
 The first beta, released with Hodi 1.0.0-beta.1: the same as 0.2.2 for a household.

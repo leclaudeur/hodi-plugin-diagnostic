@@ -2,18 +2,20 @@ import type { Store } from './store.ts'
 
 const README = `Hodi diagnostic pack
 
-One folder per article reported in Réglages > Diagnostic, or spotted by Hodi alone:
+One folder per article reported by a profile, or spotted by Hodi alone:
 
   report.json      the article, what was said about it (issues, note) and when
   page.html        its page as its site served it when it was reported (missing when the site did not answer)
   extracted.html   the text Hodi's reader took from it (missing when it found none)
-  capture-<n>.png  the screenshots added to the reports
+  capture-<report>-<n>.png  the screenshots added to the reports
 
 Give the whole pack to whoever fixes the reader (server/news/extract.ts) or the sources (sources.yml).
 `
 
 // "hodi-diagnostic-2026-11-05", the day the pack is made: Hodi adds .zip.
 export const packName = (now: number) => `hodi-diagnostic-${new Date(now).toISOString().slice(0, 10)}`
+
+const captureName = (reportId: number, at: number, type: string) => `capture-${reportId}-${at + 1}.${type}`
 
 type Entry = { path: string; text: string } | { path: string; blob: { sql: string; params: (string | number)[] } }
 
@@ -43,10 +45,11 @@ export const packEntries = (store: Store, now: number): Entry[] => {
       },
       reports: said.map(report => ({
         id: report.id,
-        by: report.auto ? 'hodi' : 'admin',
+        // Never who: the pack is about the reader, and leaves the server.
+        by: report.auto ? 'hodi' : 'profile',
         issues: report.issues,
         note: report.note,
-        capture: report.capture ? `capture-${report.id}.${report.capture.type}` : null,
+        captures: report.captures.map((capture, at) => captureName(report.id, at, capture.type)),
         at: new Date(report.createdAt).toISOString()
       }))
     }
@@ -57,12 +60,13 @@ export const packEntries = (store: Store, now: number): Entry[] => {
     })
     if (article.hasPage) entries.push({ path: `${folder}/page.html`, blob: column('page_html') })
     if (article.hasText) entries.push({ path: `${folder}/extracted.html`, blob: column('extracted_html') })
-    for (const { id, capture } of said) {
-      if (!capture) continue
-      entries.push({
-        path: `${folder}/capture-${id}.${capture.type}`,
-        blob: { sql: 'SELECT data FROM plugin_diagnostic_captures WHERE report_id = ?', params: [id] }
-      })
+    for (const { id, captures } of said) {
+      captures.forEach((capture, at) =>
+        entries.push({
+          path: `${folder}/${captureName(id, at, capture.type)}`,
+          blob: { sql: 'SELECT data FROM plugin_diagnostic_report_captures WHERE id = ?', params: [capture.id] }
+        })
+      )
     }
     index.push({ folder, title: article.title, source: article.sourceName, issues: row.issues })
   })

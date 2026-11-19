@@ -30,12 +30,12 @@
   },
   "dialog": {
     "title": "Report a problem",
-    "introStart": "Tick what is wrong. Hodi keeps ",
+    "introStart": "Say what is wrong. Hodi keeps ",
     "introKept": "the original page and its extraction",
-    "introEnd": " for your diagnostic pack.",
+    "introEnd": " for whoever runs Hodi.",
     "issues": "What is wrong",
     "otherPlaceholder": "Say what is wrong (required)",
-    "notePlaceholder": "Any detail? (optional)",
+    "notePlaceholder": "Any detail, if needed",
     "cancel": "Cancel",
     "send": "Report",
     "done": "Article reported",
@@ -45,7 +45,10 @@
     "remove": "Remove this report",
     "removeTitle": "Remove this report?",
     "removeMessage": "It leaves the list and your next pack.",
-    "removeButton": "Remove"
+    "removeButton": "Remove",
+    "issuesPlaceholder": "What’s wrong?",
+    "issuesMore": "Anything else?",
+    "dailyLimit": "That’s enough reports for today. Come back tomorrow."
   },
   "list": {
     "title": "Already reported",
@@ -54,34 +57,34 @@
     "add": "Report more"
   },
   "capture": {
-    "choose": "Choose or drop a screenshot",
-    "dropHere": "Drop the screenshot here",
-    "reading": "Reading the image…",
-    "hint": "PNG, JPG · 5 MB max",
-    "chosen": "Screenshot",
-    "remove": "Remove the screenshot",
+    "choose": "Choose or drop screenshots",
+    "dropHere": "Drop the screenshots here",
+    "reading": "Reading the images…",
+    "hint": "PNG, JPG · 5 MB each · {{count}} at most",
+    "full": "{{count}} screenshots, that’s the most",
+    "list": "Chosen screenshots",
+    "remove": "Remove {{name}}",
     "errors": {
-      "tooBig": "This image is too big (5 MB at most).",
-      "notAnImage": "This file is not a PNG or JPG image."
+      "tooBig": "{{name}} is too big (5 MB at most).",
+      "notAnImage": "{{name}} isn’t a PNG or JPG image.",
+      "tooMany": "{{count}} screenshots at most per report."
     }
   },
   "page": {
-    "title": "Diagnostic",
-    "intro": "What you reported on your sources, and what Hodi spotted on its own. Only you see it.",
+    "title": "Reports",
+    "intro": "What profiles of every household reported, and what Hodi spotted alone. The pack is for fixing the reader.",
     "pack": "Pack",
     "packTitle": "Diagnostic pack",
-    "packHint": "{{articles}} · {{size}}",
     "packEmpty": "Empty for now",
     "articles_one": "{{count}} article",
     "articles_other": "{{count}} articles",
     "download": "Download",
     "reported": "Reported",
     "auto": "Spotted by Hodi",
-    "withCapture": "With a screenshot",
     "more_one": "See the other one",
     "more_other": "See the {{count}} others",
     "emptyTitle": "Nothing reported",
-    "emptyText": "Report an article from the reader, under its text.",
+    "emptyText": "Profiles report an article from the reader, under its text.",
     "after": "After sending",
     "clear": "Empty the list",
     "clearHint": "Once the pack is sent and fixed",
@@ -89,10 +92,43 @@
     "clearTitle": "Empty the list?",
     "clearMessage": "Reports, kept pages and screenshots are deleted for good.",
     "cleared": "List emptied",
-    "failed": "Diagnostic did not answer."
+    "failed": "Diagnostic did not answer.",
+    "withCaptures_one": "With a screenshot",
+    "withCaptures_other": "With {{count}} screenshots",
+    "times_one": "{{count}} time",
+    "times_other": "{{count}} times",
+    "gauge": "{{size}} of {{room}}",
+    "gaugeLabel": "Room taken by the pack"
   },
   "size": {
     "kb": "{{value}} KB",
-    "mb": "{{value}} MB"
+    "mb": "{{value}} MB",
+    "gb": "{{value}} GB"
+  },
+  "sections": {
+    "reports": "Reports"
+  },
+  "limits": {
+    "label": "Limits",
+    "change": "Change",
+    "less": "Less",
+    "more": "More",
+    "save": "Save",
+    "megabytes": {
+      "title": "Room for the pack",
+      "intro": "Past it, Hodi first erases the oldest screenshots, then the oldest reports."
+    },
+    "days": {
+      "title": "Kept for",
+      "intro": "An older report is erased, with its screenshots and its page.",
+      "value_one": "{{count}} day",
+      "value_other": "{{count}} days"
+    },
+    "perDay": {
+      "title": "Reports a day",
+      "intro": "What one profile can report in 24 hours, so no single one fills the pack.",
+      "value_one": "{{count}} per profile",
+      "value_other": "{{count}} per profile"
+    }
   }
 }

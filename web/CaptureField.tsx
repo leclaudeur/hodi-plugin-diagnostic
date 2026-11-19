@@ -1,10 +1,11 @@
-import { ImagePlus, X } from 'lucide-react'
-import { type DragEvent, useEffect, useRef, useState } from 'react'
+import { ImageIcon, ImagePlus, X } from 'lucide-react'
+import { type DragEvent, type RefObject, useRef, useState } from 'react'
 import { RoundButton, StatusLine, usePluginTranslation } from 'hodi:sdk'
 import { sizeText } from './format.ts'
 
 // As the server checks them (server/captures.ts).
-export const CAPTURE_MAX_BYTES = 5 * 1024 * 1024
+const CAPTURE_MAX_BYTES = 5 * 1024 * 1024
+const CAPTURES_MAX = 5
 
 const isImage = async (file: File) => {
   const bytes = new Uint8Array(await file.slice(0, 8).arrayBuffer())
@@ -13,70 +14,75 @@ const isImage = async (file: File) => {
   return png || jpg
 }
 
-// The image read for a file: a preview of an earlier file is never shown for the next one.
-const usePreview = (file: File) => {
-  const [read, setRead] = useState<{ file: File; url: string } | null>(null)
-
-  // Read as a data: address: Hodi's content policy shows no blob: image.
-  useEffect(() => {
-    const reader = new FileReader()
-    reader.onload = () => setRead(typeof reader.result === 'string' ? { file, url: reader.result } : null)
-    reader.readAsDataURL(file)
-    return () => reader.abort()
-  }, [file])
-
-  return read && read.file === file ? read.url : null
-}
-
-// The screenshot taken: the image, its name and size, and the way to take it out.
+// One screenshot taken: its name on one line, its size, and the way to take it out.
 const ChosenCapture = ({ file, disabled, onRemove }: { file: File; disabled: boolean; onRemove: () => void }) => {
   const { t, language } = usePluginTranslation()
-  const preview = usePreview(file)
   return (
-    <div className="diagnostic-capture-row diagnostic-capture-chosen">
-      <span className="diagnostic-capture-tile">{preview && <img src={preview} alt="" />}</span>
-      <span className="diagnostic-capture-text">
-        <span className="diagnostic-capture-label">{t('capture.chosen')}</span>
-        <span className="diagnostic-capture-hint">
-          {file.name} · {sizeText(file.size, language, t)}
-        </span>
-      </span>
-      <RoundButton icon={X} label={t('capture.remove')} size={34} disabled={disabled} onClick={onRemove} />
-    </div>
+    <li className="diagnostic-capture-item">
+      <ImageIcon size={14} aria-hidden="true" />
+      <span className="diagnostic-capture-name">{file.name}</span>
+      <span className="diagnostic-capture-size">{sizeText(file.size, language, t)}</span>
+      <RoundButton
+        icon={X}
+        label={t('capture.remove', { name: file.name })}
+        size={28}
+        disabled={disabled}
+        onClick={onRemove}
+      />
+    </li>
   )
 }
 
-interface CaptureFieldProps {
-  file: File | null
-  onChange: (file: File | null) => void
-  disabled?: boolean
-}
-
-// The screenshot of a report: chosen or dropped, like a plugin's file in Réglages › Plugins › Ajouter un plugin. The
-// same states: lit while a file is over it, "Lecture…" while it is read, a red line when it cannot be taken. Taken,
-// it shows the image, its name and size, and the way to take it out.
-const CaptureField = ({ file, onChange, disabled = false }: CaptureFieldProps) => {
+// Takes the files it can, in order, and says why the last one left out was.
+const useCaptureChoice = (
+  files: File[],
+  onChange: (files: File[]) => void,
+  input: RefObject<HTMLInputElement | null>
+) => {
   const { t } = usePluginTranslation()
-  const input = useRef<HTMLInputElement>(null)
-  const [over, setOver] = useState(false)
   const [reading, setReading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  const choose = async (chosen: File | undefined) => {
-    if (!chosen) return
+  const choose = async (chosen: File[]) => {
+    if (!chosen.length) return
     setReading(true)
     setError(null)
     try {
-      if (chosen.size > CAPTURE_MAX_BYTES) setError(t('capture.errors.tooBig'))
-      else if (!(await isImage(chosen))) setError(t('capture.errors.notAnImage'))
-      else onChange(chosen)
+      const taken: File[] = []
+      let refused: string | null = null
+      for (const file of chosen) {
+        if (files.length + taken.length >= CAPTURES_MAX) refused = t('capture.errors.tooMany', { count: CAPTURES_MAX })
+        else if (file.size > CAPTURE_MAX_BYTES) refused = t('capture.errors.tooBig', { name: file.name })
+        else if (!(await isImage(file))) refused = t('capture.errors.notAnImage', { name: file.name })
+        else taken.push(file)
+      }
+      if (taken.length) onChange([...files, ...taken])
+      setError(refused)
     } finally {
       setReading(false)
       if (input.current) input.current.value = ''
     }
   }
 
-  const busy = disabled || reading
+  return { choose, reading, error }
+}
+
+interface CaptureFieldProps {
+  files: File[]
+  onChange: (files: File[]) => void
+  disabled?: boolean
+}
+
+// The screenshots of a report: chosen or dropped, several at once, then listed under the zone (three in view, the
+// rest by scrolling). A file that cannot be taken is said in a red line; the others still come in.
+const CaptureField = ({ files, onChange, disabled = false }: CaptureFieldProps) => {
+  const { t } = usePluginTranslation()
+  const input = useRef<HTMLInputElement>(null)
+  const [over, setOver] = useState(false)
+  const { choose, reading, error } = useCaptureChoice(files, onChange, input)
+
+  const full = files.length >= CAPTURES_MAX
+  const busy = disabled || reading || full
   const drag = (event: DragEvent, entering: boolean) => {
     event.preventDefault()
     if (!busy) setOver(entering)
@@ -84,8 +90,9 @@ const CaptureField = ({ file, onChange, disabled = false }: CaptureFieldProps) =
   const drop = (event: DragEvent) => {
     event.preventDefault()
     setOver(false)
-    if (!busy) void choose(event.dataTransfer.files[0])
+    if (!busy) void choose([...event.dataTransfer.files])
   }
+  const label = full ? 'capture.full' : reading ? 'capture.reading' : over ? 'capture.dropHere' : 'capture.choose'
 
   return (
     <div className="diagnostic-capture">
@@ -93,33 +100,45 @@ const CaptureField = ({ file, onChange, disabled = false }: CaptureFieldProps) =
         ref={input}
         type="file"
         accept="image/png,image/jpeg"
+        multiple
         hidden
-        onChange={event => void choose(event.target.files?.[0])}
+        onChange={event => void choose([...(event.target.files ?? [])])}
       />
-      {file ? (
-        <ChosenCapture file={file} disabled={disabled} onRemove={() => onChange(null)} />
-      ) : (
+      {/* One box: where screenshots are dropped, and those already taken under it. */}
+      <div
+        className={`diagnostic-capture-box ${over ? 'diagnostic-capture-over' : ''}`}
+        onDragEnter={event => drag(event, true)}
+        onDragOver={event => drag(event, true)}
+        onDragLeave={event => drag(event, false)}
+        onDrop={drop}
+      >
         <button
           type="button"
-          className={`diagnostic-capture-row diagnostic-capture-drop ${over ? 'diagnostic-capture-over' : ''}`}
+          className="diagnostic-capture-row diagnostic-capture-drop"
           disabled={busy}
           onClick={() => input.current?.click()}
-          onDragEnter={event => drag(event, true)}
-          onDragOver={event => drag(event, true)}
-          onDragLeave={event => drag(event, false)}
-          onDrop={drop}
         >
           <span className="diagnostic-capture-tile">
             <ImagePlus size={20} aria-hidden="true" />
           </span>
           <span className="diagnostic-capture-text">
-            <span className="diagnostic-capture-label">
-              {t(reading ? 'capture.reading' : over ? 'capture.dropHere' : 'capture.choose')}
-            </span>
-            <span className="diagnostic-capture-hint">{t('capture.hint')}</span>
+            <span className="diagnostic-capture-label">{t(label, { count: CAPTURES_MAX })}</span>
+            <span className="diagnostic-capture-hint">{t('capture.hint', { count: CAPTURES_MAX })}</span>
           </span>
         </button>
-      )}
+        {files.length > 0 && (
+          <ul className="diagnostic-capture-list" aria-label={t('capture.list', { count: files.length })}>
+            {files.map((file, index) => (
+              <ChosenCapture
+                key={`${file.name}-${file.size}-${file.lastModified}`}
+                file={file}
+                disabled={disabled}
+                onRemove={() => onChange(files.filter((_, at) => at !== index))}
+              />
+            ))}
+          </ul>
+        )}
+      </div>
       {error && <StatusLine tone="error">{error}</StatusLine>}
     </div>
   )

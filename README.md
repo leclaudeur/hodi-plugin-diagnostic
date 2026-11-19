@@ -19,11 +19,14 @@ It gathers everything needed to fix it into one pack, ready to send.
 Sometimes Hodi's reader cuts a text, keeps a share bar or loses the images. Diagnostic helps you show exactly what
 went wrong:
 
-- 🚩 **Report**: a button at the end of each article. Tick what is wrong, add a note and a screenshot if you like.
+- 🚩 **Report**: a button at the end of each article, for every profile. Pick what is wrong, add a note and up to
+  five screenshots if you like.
 - 👀 **Spotted by Hodi**: blocked sites, cut texts and page leftovers, noted on its own.
-- 📦 **The pack**: _Settings › Diagnostic_ lists every report and downloads them all as one zip file.
+- 📦 **The pack**: _Server › Diagnostic › Reports_ lists every report of every household and downloads them all as one
+  zip file.
 
-It is for the household's **admin only**: other profiles never see it. It makes **no AI call**.
+Each profile sees only its own reports. The pack is for the **server's admin only**, who also sets its limits. It
+makes **no AI call**.
 
 ## Install
 
@@ -32,7 +35,7 @@ You need a Hodi with plugin API 2, where you are the server's admin.
 1. Download the `.hodi-plugin` file of the
    [latest release](https://github.com/leclaudeur/hodi-plugin-diagnostic/releases/latest).
 2. In Hodi, open _Server › Plugins_ and click **Add a plugin**. Choose the file.
-3. Hodi restarts with it. **Diagnostic** shows in _Settings_, in the _Household_ group, after _AI & credits_.
+3. Hodi restarts with it. **Diagnostic** shows in the server's space, with its _Reports_ section.
 
 Releases are signed, so Hodi installs them as _Verified_.
 
@@ -41,21 +44,28 @@ Releases are signed, so Hodi installs them as _Verified_.
 
 ## The pack
 
-**Download** in _Settings › Diagnostic_ gives you one zip file, with a folder per article:
+**Download** in _Server › Diagnostic › Reports_ gives you one zip file, with a folder per article:
 
 ```text
-report.json      the article and every report on it: issues, note, who, when
-page.html        the page as its site served it at the first report
-extracted.html   the text Hodi's reader took from it
-capture-<n>.png  the screenshots
+report.json               the article and every report on it: issues, note, when, never who
+page.html                 the page as its site served it at the first report
+extracted.html            the text Hodi's reader took from it
+capture-<report>-<n>.png  the screenshots
 ```
 
 Send it to whoever fixes Hodi's reader or its sources, or [fix it yourself](#fix-the-reader). Once the fixes
 are in, click **Empty**.
 
-> [!NOTE]
-> On a server with several households, each admin sees only their own reports. What Hodi spots on its own is about
-> the reader, so only the server's admin sees it.
+## Limits
+
+So the pack never grows without end, _Server › Diagnostic › Reports_ sets three limits:
+
+- **Room for the pack**: 500 MB by default, from 50 MB to 5 GB. Past it, the oldest screenshots go first, then the
+  oldest reports.
+- **Kept for**: 90 days by default. Older reports go once a day, with their screenshots and pages.
+- **Reports a day**: 10 per profile by default.
+
+A deleted profile's reports go with it, and a removed household's too.
 
 ## Fix the reader
 
@@ -86,12 +96,16 @@ To try it in a test Hodi, use developer mode as the
 [plugin template](https://github.com/leclaudeur/hodi-plugin-template#quick-start) explains.
 
 ```text
-plugin.json          id, audience admin, permissions.articles, menu entry, the "Spot on its own" option
-server/index.ts      the routes, and onArticle for what Hodi spots
-server/store.ts      its tables: reports, kept articles, screenshots
-server/signals.ts    what Hodi spots on its own
-server/pack.ts       the files of the zip
-web/                 the reader's button, the dialogs and the Settings page
+plugin.json             id, audience all, permissions.articles, the "Spot on its own" option
+server/index.ts         the plugin: its routes, the daily clean-up, onArticle for what Hodi spots
+server/routes.ts        what every profile does from the reader, on its own reports
+server/server-routes.ts the server admin's section: summary, limits, pack, emptying
+server/store.ts         the reports; article-store.ts and capture-store.ts the kept pages and screenshots
+server/migrations.ts    its tables
+server/limits.ts        the room, the days and the reports a day
+server/signals.ts       what Hodi spots on its own
+server/pack.ts          the files of the zip
+web/                    the reader's button, the dialogs and the server's section
 locales/             French (the reference) and English
 ```
 
