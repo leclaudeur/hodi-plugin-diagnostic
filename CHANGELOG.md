@@ -8,17 +8,23 @@ release pull request raises `version` and moves the lines under it, then the tag
 
 ## [Unreleased]
 
+## [1.0.0-beta.2] - 2026-11-19
+
+Every profile reports, and the reports move to the server's space with their limits. Needs Hodi 1.0.0-beta.13 or
+later.
+
 ### Changed
 
-- **Every profile reports.** « Signaler » is under every article for every profile, teens and children included, and
-  each sees only its own reports. The reports and the pack move from Réglages to the server's space, in Serveur ›
-  Diagnostic › Signalements, for whoever runs the server.
-- **Several issues and screenshots.** « Signaler un souci » picks several issues in one field, like a source's
-  topics, and takes up to 5 screenshots of 5 MB each, listed in the drop area.
+- **Every profile reports.** _Report_ is under every article for every profile, teens and children included, and
+  each sees only its own reports. The reports and the pack move from Settings to the server's space, in Server ›
+  Diagnostic › Reports, for whoever runs the server.
+- **Several issues and screenshots.** _Report a problem_ picks several issues in one field, like a source's topics,
+  and takes up to 5 screenshots of 5 MB each, listed in the drop area.
+- Built with `@hodi-app/plugin-sdk` 1.0.0-beta.5.
 
 ### Added
 
-- **Limits.** Serveur › Diagnostic › Signalements shows how much room the pack takes, and sets the room it may take
+- **Limits.** Server › Diagnostic › Reports shows how much room the pack takes, and sets the room it may take
   (500 MB by default, the oldest screenshots then reports erased past it), how long a report stays (90 days) and how
   many reports a profile makes a day (10).
 - A deleted profile's reports, and a removed household's, go with it.
@@ -69,7 +75,8 @@ Maintenance only: nothing changes for a household.
 - **Spotted by Hodi**: blocked sites, cut texts and page leftovers, noted on their own.
 - **The pack**: Settings › Diagnostic lists every report and downloads them all as one zip file.
 
-[unreleased]: https://github.com/leclaudeur/hodi-plugin-diagnostic/compare/v1.0.0-beta.1...HEAD
+[unreleased]: https://github.com/leclaudeur/hodi-plugin-diagnostic/compare/v1.0.0-beta.2...HEAD
+[1.0.0-beta.2]: https://github.com/leclaudeur/hodi-plugin-diagnostic/releases/tag/v1.0.0-beta.2
 [1.0.0-beta.1]: https://github.com/leclaudeur/hodi-plugin-diagnostic/releases/tag/v1.0.0-beta.1
 [0.2.2]: https://github.com/leclaudeur/hodi-plugin-diagnostic/releases/tag/v0.2.2
 [0.2.1]: https://github.com/leclaudeur/hodi-plugin-diagnostic/releases/tag/v0.2.1
