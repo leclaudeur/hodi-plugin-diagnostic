@@ -23,8 +23,8 @@
     "eslint-plugin-react-hooks": "^7.1.1",
     "eslint-plugin-sonarjs": "^4.2.2",
     "globals": "^17.14.0",
-    "lucide-react": "^1.66.0",
-    "prettier": "^3.9.10",
+    "lucide-react": "^1.72.0",
+    "prettier": "^3.10.1",
     "typescript": "~6.0.3",
     "typescript-eslint": "^8.72.2"
   },
