@@ -42,7 +42,7 @@ describe('Diagnostic, from the reader', () => {
   it("keeps each profile's reports to itself", async () => {
     const { post, capture, mine, call, state } = diagnostic()
     const { body } = await post({ articleId: 'a1', issues: ['cut'] })
-    for (const other of [profile(2), profile(1, 2)]) {
+    for (const other of [profile(2), profile(3)]) {
       state.who = other
       assert.deepEqual(await mine('a1'), [])
       assert.equal((await call('DELETE /reports/:id', { id: String(body?.id) })).status, 404)
@@ -56,9 +56,9 @@ describe('Diagnostic, from the reader', () => {
 
   it('stops a profile at its reports of the day', async () => {
     const { post, call, state } = diagnostic()
-    state.who = profile(1, 1, { serverAdmin: true })
+    state.who = profile(1, { serverAdmin: true })
     assert.equal((await call('PUT /limits', {}, { key: 'perDay', value: 2 })).status, 200)
-    state.who = profile(3, 1, { kind: 'teen' })
+    state.who = profile(3, { kind: 'teen' })
     assert.equal((await post({ articleId: 'a1', issues: ['cut'] })).status, 201)
     assert.equal((await post({ articleId: 'a2', issues: ['cut'] })).status, 201)
     assert.deepEqual(await post({ articleId: 'a3', issues: ['cut'] }), { status: 429, body: { error: 'daily_limit' } })
@@ -69,20 +69,17 @@ describe('Diagnostic, from the reader', () => {
 
   it('needs a profile', async () => {
     const { post, state } = diagnostic()
-    state.who = profile(1, 1, { profileId: null })
+    state.who = profile(1, { profileId: null })
     assert.equal((await post({ articleId: 'a1', issues: ['cut'] })).status, 403)
   })
 
-  it("forgets a profile's reports when it is deleted, and a household's when it goes", async () => {
+  it("forgets a profile's reports when it is deleted", async () => {
     const { post, summary, ctx, state } = diagnostic()
     await post({ articleId: 'a1', issues: ['cut'] })
     state.who = profile(2)
     await post({ articleId: 'a2', issues: ['cut'] })
-    state.who = profile(5, 3)
-    await post({ articleId: 'a3', issues: ['cut'] })
-    await plugin.onProfileDeleted?.({ profileId: 1, householdId: 1 }, ctx)
-    await plugin.onHouseholdRemoved?.({ householdId: 3 }, ctx)
-    state.who = profile(9, 1, { serverAdmin: true })
+    await plugin.onProfileDeleted?.({ profileId: 1 } as Parameters<NonNullable<typeof plugin.onProfileDeleted>>[0], ctx)
+    state.who = profile(9, { serverAdmin: true })
     assert.deepEqual(
       (await summary()).rows.map(row => row.articleId),
       ['a2']
@@ -100,7 +97,7 @@ describe('Diagnostic, from the reader', () => {
     state.autoSignals = false
     await tell(article('a5', { status: 'failed', text: null }))
 
-    state.who = profile(9, null, { serverAdmin: true })
+    state.who = profile(9, { serverAdmin: true, profileId: null })
     assert.deepEqual(
       (await summary()).rows.map(row => [row.articleId, row.issues, row.auto]),
       [['a3', ['blocked'], true]]

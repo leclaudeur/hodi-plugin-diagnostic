@@ -4,8 +4,8 @@ import { LIMITS, isLimitKey, readLimits, roomBytes, writeLimit } from './limits.
 import { packEntries, packName } from './pack.ts'
 import { createStore } from './store.ts'
 
-// Serveur › Diagnostic, the server's admin's alone (Hodi checks it before they run): every profile's reports, of
-// every household, and what Hodi spotted.
+// Serveur › Diagnostic, the server's admin's alone (Hodi checks it before they run): every profile's reports, and
+// what Hodi spotted.
 // GET    /summary    the page's numbers, rows and limits
 // PUT    /limits     one limit { key, value }
 // DELETE /reports    all of them, once the pack is sent

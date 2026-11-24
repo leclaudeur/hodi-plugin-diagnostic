@@ -12,9 +12,7 @@ import { type Store, createStore } from './store.ts'
 // DELETE /reports/:id              one report
 
 const storeOf = (ctx: PluginContext, { who }: PluginRequest) =>
-  who.householdId === null || who.profileId === null
-    ? null
-    : createStore(ctx.db, { householdId: who.householdId, profileId: who.profileId })
+  who.profileId === null ? null : createStore(ctx.db, { profileId: who.profileId })
 
 const NO_PROFILE = { status: 403, body: { error: 'no_profile' } } as const
 

@@ -3,16 +3,16 @@ import { describe, it } from 'node:test'
 import plugin from '../server/index.ts'
 import { PNG, diagnostic, profile } from './harness.ts'
 
-const ADMIN = profile(9, null, { serverAdmin: true })
+const ADMIN = profile(9, { serverAdmin: true, profileId: null })
 
-// Two households report, one article twice, with screenshots.
+// Two profiles report, one article twice, with screenshots.
 const reported = async () => {
   const tools = diagnostic()
   const { post, capture, state } = tools
   const first = await post({ articleId: 'a1', issues: ['cut', 'extra'], note: 'Le bloc « Lire aussi »' })
   await capture(first.body?.id)
   await capture(first.body?.id)
-  state.who = profile(7, 2)
+  state.who = profile(7)
   await post({ articleId: 'a1', issues: ['layout'] })
   await post({ articleId: 'a2', issues: ['images'] })
   state.who = ADMIN
@@ -20,7 +20,7 @@ const reported = async () => {
 }
 
 describe('Serveur › Diagnostic', () => {
-  it("gathers every household's reports, by article", async () => {
+  it("gathers every profile's reports, by article", async () => {
     const { summary } = await reported()
     const { articles, rows, bytes, limits } = await summary()
     assert.equal(articles, 2)

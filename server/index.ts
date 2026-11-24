@@ -24,15 +24,12 @@ const plugin: ServerPlugin = {
     }
   },
 
-  // A profile's reports leave with it, and a household's with it.
-  onProfileDeleted: async ({ profileId, householdId }, ctx) => {
-    removeReports(ctx.db, 'household_id = ? AND profile_id = ?', [householdId, profileId])
-  },
-  onHouseholdRemoved: async ({ householdId }, ctx) => {
-    removeReports(ctx.db, 'household_id = ?', [householdId])
+  // A profile's reports leave with it.
+  onProfileDeleted: async ({ profileId }, ctx) => {
+    removeReports(ctx.db, 'profile_id = ?', [profileId])
   },
 
-  // What Hodi spots alone, as it reads an article for the first time. It belongs to no household. The page is fetched
+  // What Hodi spots alone, as it reads an article for the first time. It belongs to no profile. The page is fetched
   // again before the hook returns: Hodi refuses ctx.articles to work left running after it, and the reader does not
   // wait for the hook anyway.
   onArticle: async (article, ctx) => {
