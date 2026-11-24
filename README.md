@@ -22,7 +22,7 @@ went wrong:
 - 🚩 **Report**: a button at the end of each article, for every profile. Pick what is wrong, add a note and up to
   five screenshots if you like.
 - 👀 **Spotted by Hodi**: blocked sites, cut texts and page leftovers, noted on its own.
-- 📦 **The pack**: _Server › Diagnostic › Reports_ lists every report of every household and downloads them all as one
+- 📦 **The pack**: _Server › Diagnostic › Reports_ lists every report of every profile and downloads them all as one
   zip file.
 
 Each profile sees only its own reports. The pack is for the **server's admin only**, who also sets its limits. It
@@ -65,7 +65,7 @@ So the pack never grows without end, _Server › Diagnostic › Reports_ sets th
 - **Kept for**: 90 days by default. Older reports go once a day, with their screenshots and pages.
 - **Reports a day**: 10 per profile by default.
 
-A deleted profile's reports go with it, and a removed household's too.
+A deleted profile's reports go with it.
 
 ## Fix the reader
 

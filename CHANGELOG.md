@@ -8,6 +8,11 @@ release pull request raises `version` and moves the lines under it, then the tag
 
 ## [Unreleased]
 
+### Changed
+
+- **Hodi without households.** A report belongs to the profile that made it, on the whole server. The Hodi that drops
+  households from plugins needs this version: an older Diagnostic loses its reports there.
+
 ## [1.0.0-beta.2] - 2026-11-19
 
 Every profile reports, and the reports move to the server's space with their limits. Needs Hodi 1.0.0-beta.13 or

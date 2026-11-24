@@ -3,7 +3,7 @@ import type { PluginArticle, PluginContext } from '@hodi-app/plugin-sdk/server'
 type Database = PluginContext['db']
 
 // The article as Hodi had it when it was first reported, its page on its site included, for the pack. One is shared by
-// every report about it, whatever the household.
+// every report about it, whatever the profile.
 export const keepArticle = (
   db: Database,
   article: PluginArticle,
@@ -73,7 +73,7 @@ export interface KeptArticle {
   keptAt: number
 }
 
-// Kept articles are shared by the households: one goes once no report of any household is about it.
+// Kept articles are shared by every profile: one goes once no report is about it.
 export const dropUnreported = (db: Database) =>
   db.run(
     'DELETE FROM plugin_diagnostic_articles WHERE article_id NOT IN (SELECT article_id FROM plugin_diagnostic_reports)'

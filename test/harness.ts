@@ -40,15 +40,15 @@ const notUsed = <T extends object>(): T => new Proxy({}, { get: () => unused }) 
 
 type Who = PluginRequest['who']
 
-export const profile = (profileId: number, householdId: number | null = 1, change: Partial<Who> = {}): Who => ({
-  accountId: profileId,
-  profileId,
-  householdId,
-  kind: 'adult',
-  householdAdmin: false,
-  serverAdmin: false,
-  ...change
-})
+// Hodi no longer says a household: the SDK's types from before still list one.
+export const profile = (profileId: number, change: Partial<Who> = {}): Who =>
+  ({
+    accountId: profileId,
+    profileId,
+    kind: 'adult',
+    serverAdmin: false,
+    ...change
+  }) as Who
 
 // A plugin with its own database, its migrations run, and the routes called as Hodi does once it matched them.
 export const diagnostic = () => {

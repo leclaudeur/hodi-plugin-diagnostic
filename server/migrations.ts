@@ -70,5 +70,8 @@ export const MIGRATIONS = [
   'ALTER TABLE plugin_diagnostic_reports ADD COLUMN profile_id INTEGER',
   'CREATE INDEX IF NOT EXISTS plugin_diagnostic_reports_profile ON plugin_diagnostic_reports (profile_id)',
   // The limits the server's admin sets in Serveur › Diagnostic; a missing key keeps its default (limits.ts).
-  'CREATE TABLE IF NOT EXISTS plugin_diagnostic_limits (key TEXT PRIMARY KEY, value INTEGER NOT NULL)'
+  'CREATE TABLE IF NOT EXISTS plugin_diagnostic_limits (key TEXT PRIMARY KEY, value INTEGER NOT NULL)',
+  // Hodi has no households any more: a profile's id names it on the whole server, and reports are its own.
+  'DROP INDEX IF EXISTS plugin_diagnostic_reports_household',
+  'ALTER TABLE plugin_diagnostic_reports DROP COLUMN household_id'
 ]

@@ -8,7 +8,7 @@ type Database = PluginContext['db']
 export { MIGRATIONS } from './migrations.ts'
 
 // Who looks: a profile sees its own reports, the server's admin sees them all, with what Hodi spotted alone.
-export type Scope = { profileId: number; householdId: number } | 'server'
+export type Scope = { profileId: number } | 'server'
 
 export interface Report {
   id: number
@@ -76,7 +76,7 @@ const reportedArticles = (db: Database, all: Report[]): ReportedArticle[] => {
 const visibleTo = (scope: Scope | null) => {
   if (scope === 'server') return { sql: '1', params: [] as (string | number)[] }
   if (scope === null) return { sql: '0', params: [] as (string | number)[] }
-  return { sql: '(household_id = ? AND profile_id = ?)', params: [scope.householdId, scope.profileId] }
+  return { sql: 'profile_id = ?', params: [scope.profileId] }
 }
 
 export const createStore = (db: Database, scope: Scope | null) => {
@@ -117,16 +117,15 @@ export const createStore = (db: Database, scope: Scope | null) => {
     add: (report: { articleId: string; auto: boolean; issues: readonly Issue[]; note?: string | null; now: number }) =>
       Number(
         db.run(
-          `INSERT INTO plugin_diagnostic_reports (article_id, auto, issues, note, created_at, household_id, profile_id)
-           VALUES (?, ?, ?, ?, ?, ?, ?)`,
+          `INSERT INTO plugin_diagnostic_reports (article_id, auto, issues, note, created_at, profile_id)
+           VALUES (?, ?, ?, ?, ?, ?)`,
           [
             report.articleId,
             report.auto ? 1 : 0,
             JSON.stringify(report.issues),
             report.note ?? null,
             report.now,
-            // What Hodi spots belongs to no household nor profile.
-            report.auto ? null : (owner?.householdId ?? null),
+            // What Hodi spots belongs to no profile.
             report.auto ? null : (owner?.profileId ?? null)
           ]
         ).lastInsertRowid
