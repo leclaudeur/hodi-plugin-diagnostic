@@ -10,7 +10,8 @@ release pull request raises `version` and moves the lines under it, then the tag
 
 ## [1.0.0-beta.3] - 2026-11-25
 
-Reports belong to a profile, on a Hodi with no households. Needs Hodi 1.0.0-beta.14 or later.
+Reports belong to a profile, on a Hodi with no households. Built with `@hodi-app/plugin-sdk` 1.0.0-beta.7, which writes
+its version into the package, as Hodi 1.0.0-beta.14 or later requires.
 
 ### Changed
 
