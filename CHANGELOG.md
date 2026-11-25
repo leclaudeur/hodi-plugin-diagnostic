@@ -8,10 +8,15 @@ release pull request raises `version` and moves the lines under it, then the tag
 
 ## [Unreleased]
 
+## [1.0.0-beta.3] - 2026-11-25
+
+Reports belong to a profile, on a Hodi with no households. Needs Hodi 1.0.0-beta.14 or later.
+
 ### Changed
 
 - **Hodi without households.** A report belongs to the profile that made it, on the whole server. The Hodi that drops
   households from plugins needs this version: an older Diagnostic loses its reports there.
+- Built with `@hodi-app/plugin-sdk` 1.0.0-beta.6.
 
 ## [1.0.0-beta.2] - 2026-11-19
 
@@ -80,7 +85,8 @@ Maintenance only: nothing changes for a household.
 - **Spotted by Hodi**: blocked sites, cut texts and page leftovers, noted on their own.
 - **The pack**: Settings › Diagnostic lists every report and downloads them all as one zip file.
 
-[unreleased]: https://github.com/leclaudeur/hodi-plugin-diagnostic/compare/v1.0.0-beta.2...HEAD
+[unreleased]: https://github.com/leclaudeur/hodi-plugin-diagnostic/compare/v1.0.0-beta.3...HEAD
+[1.0.0-beta.3]: https://github.com/leclaudeur/hodi-plugin-diagnostic/releases/tag/v1.0.0-beta.3
 [1.0.0-beta.2]: https://github.com/leclaudeur/hodi-plugin-diagnostic/releases/tag/v1.0.0-beta.2
 [1.0.0-beta.1]: https://github.com/leclaudeur/hodi-plugin-diagnostic/releases/tag/v1.0.0-beta.1
 [0.2.2]: https://github.com/leclaudeur/hodi-plugin-diagnostic/releases/tag/v0.2.2
